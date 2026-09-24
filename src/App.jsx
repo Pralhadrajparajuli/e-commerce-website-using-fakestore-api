@@ -5,6 +5,7 @@ import Home from "./Home";
 import Products from "./Products";
 import ProductDetails from "./ProductDetails";
 import CategoryProducts from "./CategoryProducts";
+import Login from "./Login";
 // import Cart from "./Cart";
 
 const App = () => {
@@ -17,6 +18,9 @@ const App = () => {
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/category/:category" element={<CategoryProducts/>} />
+        <Route path="/sale" element={<Products saleOnly={true} />}/>
+        <Route path="/products/:category" element={<Products />} />
+        <Route path="/login" element={<Login />} />
         {/* <Route path="/cart" element={<Cart />}/> */}
       </Routes>
     </>

@@ -1,49 +1,132 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import {
+  Link,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+
 import { Heart, ShoppingCart } from "lucide-react";
 
 import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
 
-const Products = () => {
+const Products = ({ saleOnly = false }) => {
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   const productsPerPage = 9;
 
+  // Get category from URL
+  const { category } = useParams();
+
+  // Get search text from URL
+  const [searchParams] = useSearchParams();
+
+  const searchText = searchParams.get("search") || "";
+
+  // Cart
   const { addToCart } = useCart();
 
+  // Wishlist
   const {
     toggleWishlist,
     isInWishlist,
   } = useWishlist();
 
+  // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
-      const response = await fetch(
-        "https://fakestoreapi.com/products"
-      );
+      try {
+        const response = await fetch(
+          "https://fakestoreapi.com/products"
+        );
 
-      const data = await response.json();
+        const data = await response.json();
 
-      setProducts(data);
+        setProducts(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
     };
 
     fetchProducts();
   }, []);
 
-  // Calculate products for current page
-  const lastProductIndex = currentPage * productsPerPage;
-  const firstProductIndex = lastProductIndex - productsPerPage;
+  /*
+    Products on sale
+  */
+  const saleProductIds = [1, 3, 5, 7, 9];
 
-  const currentProducts = products.slice(
+  /*
+    Add sale information
+  */
+  const productsWithSale = products.map((product) => {
+    const isSale = saleProductIds.includes(product.id);
+
+    return {
+      ...product,
+      isSale,
+      originalPrice: product.price,
+      salePrice: isSale
+        ? Number((product.price * 0.8).toFixed(2))
+        : product.price,
+    };
+  });
+
+  /*
+    Filter products
+  */
+  let displayedProducts = productsWithSale;
+
+  // Search filter
+  if (searchText) {
+    const search = searchText.toLowerCase();
+
+    displayedProducts = displayedProducts.filter(
+      (product) =>
+        product.title.toLowerCase().includes(search) ||
+        product.description.toLowerCase().includes(search) ||
+        product.category.toLowerCase().includes(search)
+    );
+  }
+
+  // Category filter
+  if (category) {
+    displayedProducts = displayedProducts.filter(
+      (product) => product.category === category
+    );
+  }
+
+  // Sale filter
+  if (saleOnly) {
+    displayedProducts = displayedProducts.filter(
+      (product) => product.isSale
+    );
+  }
+
+  /*
+    Reset pagination when filter changes
+  */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, saleOnly, searchText]);
+
+  /*
+    Pagination
+  */
+  const lastProductIndex =
+    currentPage * productsPerPage;
+
+  const firstProductIndex =
+    lastProductIndex - productsPerPage;
+
+  const currentProducts = displayedProducts.slice(
     firstProductIndex,
     lastProductIndex
   );
 
-  // Calculate total pages
   const totalPages = Math.ceil(
-    products.length / productsPerPage
+    displayedProducts.length / productsPerPage
   );
 
   // Next page
@@ -60,17 +143,42 @@ const Products = () => {
     }
   };
 
+  /*
+    Page title
+  */
+  const getTitle = () => {
+    if (searchText) {
+      return `Search results for "${searchText}"`;
+    }
+
+    if (saleOnly) {
+      return "Sale Products";
+    }
+
+    if (!category) {
+      return "All Products";
+    }
+
+    return category;
+  };
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
 
       {/* Title */}
       <div className="mb-10">
-        <h1 className="text-3xl font-bold text-gray-900">
-          All Products
+        <h1 className="text-3xl font-bold capitalize text-gray-900">
+          {getTitle()}
         </h1>
 
         <p className="mt-2 text-gray-500">
-          Explore our complete collection of products
+          {searchText
+            ? "Products matching your search"
+            : saleOnly
+            ? "Grab these products at special prices"
+            : category
+            ? `Explore our ${category} collection`
+            : "Explore our complete collection of products"}
         </p>
       </div>
 
@@ -80,9 +188,10 @@ const Products = () => {
         {currentProducts.map((product) => (
           <div key={product.id}>
 
-            {/* Image box */}
+            {/* Image Box */}
             <div className="group relative h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
 
+              {/* Product Image */}
               <Link to={`/product/${product.id}`}>
                 <img
                   src={product.image}
@@ -91,7 +200,14 @@ const Products = () => {
                 />
               </Link>
 
-              {/* Heart - Top Right */}
+              {/* Sale Badge */}
+              {product.isSale && (
+                <span className="absolute left-4 top-4 rounded-md bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                  SALE
+                </span>
+              )}
+
+              {/* Wishlist */}
               <button
                 onClick={() => toggleWishlist(product)}
                 className="absolute right-4 top-4 rounded-full bg-white p-2 text-gray-700 shadow-sm transition hover:text-red-500"
@@ -106,7 +222,7 @@ const Products = () => {
                 />
               </button>
 
-              {/* Add to Cart - Bottom Center */}
+              {/* Add to Cart */}
               <button
                 onClick={() => addToCart(product)}
                 className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-2 items-center gap-2 rounded-lg bg-black px-5 py-2 text-sm font-medium text-white opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100"
@@ -117,16 +233,32 @@ const Products = () => {
 
             </div>
 
-            {/* Product Name */}
+            {/* Product Information */}
             <Link to={`/product/${product.id}`}>
+
               <h2 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900 hover:text-blue-600">
                 {product.title}
               </h2>
 
-              {/* Price */}
-              <p className="mt-2 text-lg font-bold text-gray-900">
-                ${product.price}
-              </p>
+              {/* Sale Price */}
+              {product.isSale ? (
+                <div className="mt-2 flex items-center gap-2">
+
+                  <p className="text-lg font-bold text-red-500">
+                    ${product.salePrice}
+                  </p>
+
+                  <p className="text-sm text-gray-400 line-through">
+                    ${product.originalPrice}
+                  </p>
+
+                </div>
+              ) : (
+                <p className="mt-2 text-lg font-bold text-gray-900">
+                  ${product.price}
+                </p>
+              )}
+
             </Link>
 
           </div>
@@ -134,30 +266,52 @@ const Products = () => {
 
       </div>
 
+      {/* No Products */}
+      {displayedProducts.length === 0 && (
+        <div className="py-20 text-center">
+
+          <p className="text-lg font-medium text-gray-700">
+            No products found
+          </p>
+
+          {searchText && (
+            <p className="mt-2 text-gray-500">
+              Try searching with another product name.
+            </p>
+          )}
+
+        </div>
+      )}
+
       {/* Pagination */}
-      <div className="mt-12 flex items-center justify-center gap-6">
+      {totalPages > 1 && (
+        <div className="mt-12 flex items-center justify-center gap-6">
 
-        <button
-          onClick={previousPage}
-          disabled={currentPage === 1}
-          className="rounded-lg border px-5 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          ← Previous
-        </button>
+          {/* Previous */}
+          <button
+            onClick={previousPage}
+            disabled={currentPage === 1}
+            className="rounded-lg border px-5 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ← Previous
+          </button>
 
-        <span className="font-medium text-gray-700">
-          Page {currentPage} of {totalPages}
-        </span>
+          {/* Page */}
+          <span className="font-medium text-gray-700">
+            Page {currentPage} of {totalPages}
+          </span>
 
-        <button
-          onClick={nextPage}
-          disabled={currentPage === totalPages}
-          className="rounded-lg border px-5 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Next →
-        </button>
+          {/* Next */}
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="rounded-lg border px-5 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next →
+          </button>
 
-      </div>
+        </div>
+      )}
 
     </section>
   );

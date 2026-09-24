@@ -2,12 +2,24 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
+import { useCart } from "./CartContext";
+import { useWishlist } from "./WishlistContext";
+
 const ProductDetails = () => {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+
+  // Cart
+  const { addToCart } = useCart();
+
+  // Wishlist
+  const {
+    toggleWishlist,
+    isInWishlist,
+  } = useWishlist();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,6 +42,15 @@ const ProductDetails = () => {
       </p>
     );
   }
+
+  const productInWishlist = isInWishlist(product.id);
+
+  // Add product to cart
+  const handleAddToCart = () => {
+    for (let i = 0; i < quantity; i++) {
+      addToCart(product);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
@@ -86,6 +107,7 @@ const ProductDetails = () => {
 
             {/* Quantity */}
             <div className="flex items-center rounded-lg border border-gray-300">
+
               <button
                 onClick={() =>
                   setQuantity((quantity) =>
@@ -109,23 +131,38 @@ const ProductDetails = () => {
               >
                 +
               </button>
+
             </div>
 
             {/* Add to Cart */}
-            <button className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800">
+            <button
+              onClick={handleAddToCart}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
+            >
               <ShoppingCart size={20} />
               Add to Cart
             </button>
 
-            {/* Favorite */}
-            <button className="flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 hover:bg-gray-100">
-              <Heart size={22} />
+            {/* Wishlist */}
+            <button
+              onClick={() => toggleWishlist(product)}
+              className="flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 hover:bg-gray-100"
+            >
+              <Heart
+                size={22}
+                className={
+                  productInWishlist
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-700"
+                }
+              />
             </button>
 
           </div>
 
           {/* Description */}
           <div className="mt-10 border-t pt-6">
+
             <h2 className="font-semibold text-gray-900">
               Product Description
             </h2>
@@ -133,6 +170,7 @@ const ProductDetails = () => {
             <p className="mt-3 leading-7 text-gray-600">
               {product.description}
             </p>
+
           </div>
 
         </div>
