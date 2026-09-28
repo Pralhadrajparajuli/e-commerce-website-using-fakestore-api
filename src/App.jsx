@@ -6,6 +6,8 @@ import Products from "./Products";
 import ProductDetails from "./ProductDetails";
 import CategoryProducts from "./CategoryProducts";
 import Login from "./Login";
+import Account from "./Account";
+import Footer from "./Footer";
 // import Cart from "./Cart";
 
 const App = () => {
@@ -21,8 +23,10 @@ const App = () => {
         <Route path="/sale" element={<Products saleOnly={true} />}/>
         <Route path="/products/:category" element={<Products />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/account" element={ <Account />}/>
         {/* <Route path="/cart" element={<Cart />}/> */}
       </Routes>
+      <Footer/>
     </>
   );
 };
