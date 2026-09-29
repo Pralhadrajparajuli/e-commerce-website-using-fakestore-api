@@ -106,40 +106,76 @@ const Header = () => {
               {productsOpen && (
                 <div className="absolute left-0 top-full z-50 mt-3 w-56 rounded-lg border bg-white py-2 shadow-lg">
 
-                  {/* Electronics */}
+                  {/* Smartphones */}
                   <Link
-                    to="/products/electronics"
+                    to="/products/smartphones"
                     onClick={() => setProductsOpen(false)}
                     className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
                   >
-                    Electronics
+                    Smartphones
                   </Link>
 
-                  {/* Jewelery */}
+                  {/* Laptops */}
                   <Link
-                    to="/products/jewelery"
+                    to="/products/laptops"
                     onClick={() => setProductsOpen(false)}
                     className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
                   >
-                    Jewelery
+                    Laptops
                   </Link>
 
-                  {/* Men's Clothing */}
+                  {/* Tablets */}
                   <Link
-                    to="/products/men's clothing"
+                    to="/products/tablets"
                     onClick={() => setProductsOpen(false)}
                     className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
                   >
-                    Men's Clothing
+                    Tablets
                   </Link>
 
-                  {/* Women's Clothing */}
+                  {/* Men's Shoes */}
                   <Link
-                    to="/products/women's clothing"
+                    to="/products/mens-shoes"
                     onClick={() => setProductsOpen(false)}
                     className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
                   >
-                    Women's Clothing
+                    Men's Shoes
+                  </Link>
+
+                  {/* Women's Shoes */}
+                  <Link
+                    to="/products/womens-shoes"
+                    onClick={() => setProductsOpen(false)}
+                    className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
+                  >
+                    Women's Shoes
+                  </Link>
+
+                  {/* Furniture */}
+                  <Link
+                    to="/products/furniture"
+                    onClick={() => setProductsOpen(false)}
+                    className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
+                  >
+                    Furniture
+                  </Link>
+
+                  {/* Groceries */}
+                  <Link
+                    to="/products/groceries"
+                    onClick={() => setProductsOpen(false)}
+                    className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
+                  >
+                    Groceries
+                  </Link>
+
+                  {/* Beauty */}
+                  <Link
+                    to="/products/beauty"
+                    onClick={() => setProductsOpen(false)}
+                    className="block px-4 py-3 hover:bg-gray-100 hover:text-blue-600"
+                  >
+                    Beauty
                   </Link>
 
                 </div>
@@ -299,7 +335,6 @@ const Header = () => {
         isOpen={wishlistOpen}
         onClose={() => setWishlistOpen(false)}
       />
-
     </>
   );
 };

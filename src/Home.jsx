@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PromoGrid from "./PromoGrid";
 import CategorySection from "./CategorySection";
 import TrendingNow from "./TrendingNow";
+
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,7 +11,9 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("https://fakestoreapi.com/products");
+        const response = await fetch(
+          "https://dummyjson.com/products"
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch products");
@@ -18,7 +21,8 @@ const Home = () => {
 
         const data = await response.json();
 
-        setProducts(data);
+        // DummyJSON returns products inside data.products
+        setProducts(data.products);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -45,7 +49,7 @@ const Home = () => {
     <main>
       <PromoGrid products={products} />
       <CategorySection products={products} />
-    <TrendingNow products={products} />
+      <TrendingNow products={products} />
     </main>
   );
 };

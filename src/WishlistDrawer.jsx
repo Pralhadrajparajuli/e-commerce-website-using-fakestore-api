@@ -30,7 +30,6 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
 
         {/* Wishlist items */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-
           {wishlist.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <p className="text-gray-500">
@@ -39,7 +38,6 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
             </div>
           ) : (
             <div className="space-y-5">
-
               {wishlist.map((item) => (
                 <div
                   key={item.id}
@@ -47,9 +45,9 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                 >
 
                   {/* Product image */}
-                  <div className="h-24 w-24 rounded-xl bg-gray-100 p-3">
+                  <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
-                      src={item.image}
+                      src={item.thumbnail || item.images?.[0]}
                       alt={item.title}
                       className="h-full w-full object-contain"
                     />
@@ -77,13 +75,10 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                     </button>
 
                   </div>
-
                 </div>
               ))}
-
             </div>
           )}
-
         </div>
       </div>
     </>

@@ -22,13 +22,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Background */}
+      {/* Background overlay */}
       <div
         className="fixed inset-0 z-40 bg-black/30"
         onClick={onClose}
       />
 
-      {/* Cart */}
+      {/* Cart drawer */}
       <div className="fixed right-0 top-0 z-50 flex h-full w-[400px] flex-col bg-white shadow-2xl">
 
         {/* Header */}
@@ -42,9 +42,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Cart Items */}
+        {/* Cart items */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-
           {cart.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <p className="text-gray-500">
@@ -53,23 +52,22 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </div>
           ) : (
             <div className="space-y-6">
-
               {cart.map((item) => (
                 <div
                   key={item.id}
                   className="flex gap-4 border-b pb-5"
                 >
 
-                  {/* Image */}
+                  {/* Product image */}
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
-                      src={item.image}
+                      src={item.thumbnail || item.images?.[0]}
                       alt={item.title}
                       className="h-full w-full object-contain"
                     />
                   </div>
 
-                  {/* Information */}
+                  {/* Product information */}
                   <div className="flex flex-1 flex-col">
 
                     <h3 className="line-clamp-2 text-sm font-semibold">
@@ -85,24 +83,27 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
                       <div className="flex items-center rounded-lg border">
 
+                        {/* Decrease */}
                         <button
                           onClick={() =>
                             decreaseQuantity(item.id)
                           }
-                          className="p-2"
+                          className="p-2 hover:bg-gray-100"
                         >
                           <Minus size={14} />
                         </button>
 
+                        {/* Quantity */}
                         <span className="px-3 text-sm">
                           {item.quantity}
                         </span>
 
+                        {/* Increase */}
                         <button
                           onClick={() =>
                             increaseQuantity(item.id)
                           }
-                          className="p-2"
+                          className="p-2 hover:bg-gray-100"
                         >
                           <Plus size={14} />
                         </button>
@@ -120,17 +121,14 @@ const CartDrawer = ({ isOpen, onClose }) => {
                       </button>
 
                     </div>
-
                   </div>
                 </div>
               ))}
-
             </div>
           )}
-
         </div>
 
-        {/* Bottom */}
+        {/* Bottom section */}
         {cart.length > 0 && (
           <div className="border-t bg-white px-6 py-5">
 
@@ -146,7 +144,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
             {/* Continue Shopping */}
             <button
               onClick={onClose}
-              className="mb-3 w-full rounded-xl border border-gray-300 py-3 font-semibold"
+              className="mb-3 w-full rounded-xl border border-gray-300 py-3 font-semibold hover:bg-gray-100"
             >
               Continue Shopping
             </button>

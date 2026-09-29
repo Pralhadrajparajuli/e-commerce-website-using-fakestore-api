@@ -7,7 +7,10 @@ import { useWishlist } from "./WishlistContext";
 const TrendingNow = ({ products }) => {
   const { addToCart } = useCart();
 
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  const {
+    toggleWishlist,
+    isInWishlist,
+  } = useWishlist();
 
   // Show only first 8 products
   const trendingProducts = products.slice(0, 8);
@@ -17,6 +20,7 @@ const TrendingNow = ({ products }) => {
 
       {/* Heading */}
       <div className="mb-10 flex items-center justify-between">
+
         <div>
           <h2 className="text-3xl font-bold text-gray-900">
             Trending Now
@@ -34,13 +38,17 @@ const TrendingNow = ({ products }) => {
         >
           Explore All →
         </Link>
+
       </div>
 
       {/* Products */}
       <div className="grid grid-cols-4 gap-x-6 gap-y-10">
 
         {trendingProducts.map((product) => (
-          <div key={product.id} className="group">
+          <div
+            key={product.id}
+            className="group"
+          >
 
             {/* Image + Buttons */}
             <div className="relative">
@@ -48,11 +56,13 @@ const TrendingNow = ({ products }) => {
               {/* Product Image */}
               <Link to={`/product/${product.id}`}>
                 <div className="h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
+
                   <img
-                    src={product.image}
+                    src={product.thumbnail}
                     alt={product.title}
                     className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                   />
+
                 </div>
               </Link>
 
@@ -84,6 +94,7 @@ const TrendingNow = ({ products }) => {
 
             {/* Product Title */}
             <Link to={`/product/${product.id}`}>
+
               <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900 transition group-hover:text-blue-600">
                 {product.title}
               </h3>
@@ -92,6 +103,7 @@ const TrendingNow = ({ products }) => {
               <p className="mt-2 text-lg font-bold text-gray-900">
                 ${product.price}
               </p>
+
             </Link>
 
           </div>

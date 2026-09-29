@@ -75,11 +75,11 @@ const Footer = () => {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-5 text-sm text-gray-500 md:flex-row">
           <p>© 2026 TechStore. All rights reserved.</p>
 
-          <div className="flex gap-5">
+          {/* <div className="flex gap-5">
             <button className="hover:text-white">Privacy Policy</button>
 
             <button className="hover:text-white">Terms & Conditions</button>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

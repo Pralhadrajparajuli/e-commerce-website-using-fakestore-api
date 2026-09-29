@@ -16,34 +16,33 @@ const Products = ({ saleOnly = false }) => {
 
   const productsPerPage = 9;
 
-  // Get category from URL
   const { category } = useParams();
 
-  // Get search text from URL
   const [searchParams] = useSearchParams();
-
   const searchText = searchParams.get("search") || "";
 
-  // Cart
   const { addToCart } = useCart();
 
-  // Wishlist
   const {
     toggleWishlist,
     isInWishlist,
   } = useWishlist();
 
-  // Fetch products
+  // Fetch products from DummyJSON
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const response = await fetch(
-          "https://fakestoreapi.com/products"
+          "https://dummyjson.com/products?limit=0"
         );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
 
         const data = await response.json();
 
-        setProducts(data);
+        setProducts(data.products);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -129,14 +128,12 @@ const Products = ({ saleOnly = false }) => {
     displayedProducts.length / productsPerPage
   );
 
-  // Next page
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
 
-  // Previous page
   const previousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -194,7 +191,7 @@ const Products = ({ saleOnly = false }) => {
               {/* Product Image */}
               <Link to={`/product/${product.id}`}>
                 <img
-                  src={product.image}
+                  src={product.thumbnail}
                   alt={product.title}
                   className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                 />
@@ -287,7 +284,6 @@ const Products = ({ saleOnly = false }) => {
       {totalPages > 1 && (
         <div className="mt-12 flex items-center justify-center gap-6">
 
-          {/* Previous */}
           <button
             onClick={previousPage}
             disabled={currentPage === 1}
@@ -296,12 +292,10 @@ const Products = ({ saleOnly = false }) => {
             ← Previous
           </button>
 
-          {/* Page */}
           <span className="font-medium text-gray-700">
             Page {currentPage} of {totalPages}
           </span>
 
-          {/* Next */}
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}

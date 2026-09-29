@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
-// Import cart and wishlist
 import { useCart } from "./CartContext";
 import { useWishlist } from "./WishlistContext";
 
@@ -11,10 +10,8 @@ const CategoryProducts = () => {
 
   const [products, setProducts] = useState([]);
 
-  // Cart
   const { addToCart } = useCart();
 
-  // Wishlist
   const {
     toggleWishlist,
     isInWishlist,
@@ -22,12 +19,21 @@ const CategoryProducts = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const response = await fetch(
-        "https://fakestoreapi.com/products"
-      );
+      try {
+        const response = await fetch(
+          "https://dummyjson.com/products?limit=0"
+        );
 
-      const data = await response.json();
-      setProducts(data);
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
+
+        const data = await response.json();
+
+        setProducts(data.products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
     };
 
     fetchProducts();
@@ -68,7 +74,7 @@ const CategoryProducts = () => {
               <Link to={`/product/${product.id}`}>
                 <div className="h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
                   <img
-                    src={product.image}
+                    src={product.thumbnail}
                     alt={product.title}
                     className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                   />
@@ -90,7 +96,7 @@ const CategoryProducts = () => {
                 />
               </button>
 
-              {/* Add to Cart Button */}
+              {/* Add to Cart */}
               <button
                 onClick={() => addToCart(product)}
                 className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-3 items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-gray-800"

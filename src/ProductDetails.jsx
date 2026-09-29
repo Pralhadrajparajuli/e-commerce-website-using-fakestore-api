@@ -23,13 +23,21 @@ const ProductDetails = () => {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const response = await fetch(
-        `https://fakestoreapi.com/products/${id}`
-      );
+      try {
+        const response = await fetch(
+          `https://dummyjson.com/products/${id}`
+        );
 
-      const data = await response.json();
+        if (!response.ok) {
+          throw new Error("Failed to fetch product");
+        }
 
-      setProduct(data);
+        const data = await response.json();
+
+        setProduct(data);
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     fetchProduct();
@@ -47,9 +55,7 @@ const ProductDetails = () => {
 
   // Add product to cart
   const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
-    }
+    addToCart(product, quantity);
   };
 
   return (
@@ -60,7 +66,7 @@ const ProductDetails = () => {
         {/* LEFT - Product Image */}
         <div className="flex h-[600px] items-center justify-center rounded-2xl bg-gray-100 p-10">
           <img
-            src={product.image}
+            src={product.images?.[0] || product.thumbnail}
             alt={product.title}
             className="h-full w-full object-contain"
           />
