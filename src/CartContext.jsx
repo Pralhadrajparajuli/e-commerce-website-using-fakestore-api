@@ -1,9 +1,12 @@
 import { createContext, useContext, useState } from "react";
+import { useToast } from "./ToastContext";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+
+  const { showToast } = useToast();
 
   // Add product to cart
   const addToCart = (product, quantity = 1) => {
@@ -33,6 +36,8 @@ export const CartProvider = ({ children }) => {
         },
       ];
     });
+
+    showToast(`added to cart`);
   };
 
   // Increase quantity
@@ -47,6 +52,8 @@ export const CartProvider = ({ children }) => {
           : item
       )
     );
+
+    showToast("Quantity increased");
   };
 
   // Decrease quantity
@@ -63,6 +70,8 @@ export const CartProvider = ({ children }) => {
         )
         .filter((item) => item.quantity > 0)
     );
+
+    showToast("Quantity decreased");
   };
 
   // Delete product
@@ -70,6 +79,8 @@ export const CartProvider = ({ children }) => {
     setCart((currentCart) =>
       currentCart.filter((item) => item.id !== id)
     );
+
+    showToast("Product removed from cart", "error");
   };
 
   // Total number of products

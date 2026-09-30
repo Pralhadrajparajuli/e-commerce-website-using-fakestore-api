@@ -22,24 +22,19 @@ const Header = () => {
   // Wishlist data
   const { wishlistCount } = useWishlist();
 
-  // Authentication data
+  // Authentication data 
   const { user, logout } = useAuth();
 
   // Drawer states
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
-
   // Product dropdown
   const [productsOpen, setProductsOpen] = useState(false);
-
   // User dropdown
   const [userOpen, setUserOpen] = useState(false);
-
   // Search
   const [searchText, setSearchText] = useState("");
-
   const navigate = useNavigate();
-
   // Search submit
   const handleSearch = (e) => {
     e.preventDefault();
@@ -132,7 +127,6 @@ const Header = () => {
                   >
                     Tablets
                   </Link>
-
                   {/* Men's Shoes */}
                   <Link
                     to="/products/mens-shoes"

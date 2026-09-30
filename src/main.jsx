@@ -7,12 +7,14 @@ import App from "./App";
 import { CartProvider } from "./CartContext";
 import { WishlistProvider } from "./WishlistContext";
 import { AuthProvider } from "./AuthContext";
+import { ToastProvider } from "./ToastContext";
 
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
+    <ToastProvider>
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
@@ -20,6 +22,7 @@ createRoot(document.getElementById("root")).render(
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   </StrictMode>
 );

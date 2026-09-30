@@ -59,7 +59,6 @@ const Login = () => {
   return (
     <section className="flex min-h-[80vh] items-center justify-center px-6 py-12">
       <div className="w-full max-w-md rounded-2xl border bg-white p-8 shadow-sm">
-
         {/* TITLE */}
         <h1 className="text-3xl font-bold text-gray-900">
           {mode === "login" ? "Welcome Back" : "Create Account"}
@@ -80,9 +79,7 @@ const Login = () => {
               setError("");
             }}
             className={`w-1/2 rounded-md py-2 font-medium transition ${
-              mode === "login"
-                ? "bg-white shadow"
-                : "text-gray-500"
+              mode === "login" ? "bg-white shadow" : "text-gray-500"
             }`}
           >
             Sign In
@@ -95,9 +92,7 @@ const Login = () => {
               setError("");
             }}
             className={`w-1/2 rounded-md py-2 font-medium transition ${
-              mode === "register"
-                ? "bg-white shadow"
-                : "text-gray-500"
+              mode === "register" ? "bg-white shadow" : "text-gray-500"
             }`}
           >
             Register
@@ -112,17 +107,11 @@ const Login = () => {
         )}
 
         {/* FORM */}
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-5"
-        >
-
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           {/* NAME - ONLY FOR REGISTER */}
           {mode === "register" && (
             <div>
-              <label className="mb-2 block text-sm font-medium">
-                Name
-              </label>
+              <label className="mb-2 block text-sm font-medium">Name</label>
 
               <input
                 type="text"
@@ -137,9 +126,7 @@ const Login = () => {
 
           {/* EMAIL */}
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              Email
-            </label>
+            <label className="mb-2 block text-sm font-medium">Email</label>
 
             <input
               type="email"
@@ -153,18 +140,14 @@ const Login = () => {
 
           {/* PASSWORD */}
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              Password
-            </label>
+            <label className="mb-2 block text-sm font-medium">Password</label>
 
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={
-                mode === "login"
-                  ? "Enter your password"
-                  : "Create a password"
+                mode === "login" ? "Enter your password" : "Create a password"
               }
               required
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
@@ -181,9 +164,7 @@ const Login = () => {
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={(e) =>
-                  setConfirmPassword(e.target.value)
-                }
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
                 required
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"
