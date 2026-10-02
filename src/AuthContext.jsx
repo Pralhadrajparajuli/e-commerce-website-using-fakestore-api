@@ -29,24 +29,20 @@ export const AuthProvider = ({ children }) => {
       name,
       email,
       password,
+      address: "",
     };
 
     // Save registered user
-    localStorage.setItem(
-      "registeredUser",
-      JSON.stringify(newUser)
-    );
+    localStorage.setItem("registeredUser", JSON.stringify(newUser));
 
     // Automatically log in after registration
     const loggedInUser = {
       name,
       email,
+      address: "",
     };
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(loggedInUser)
-    );
+    localStorage.setItem("user", JSON.stringify(loggedInUser));
 
     setUser(loggedInUser);
 
@@ -68,19 +64,14 @@ export const AuthProvider = ({ children }) => {
 
     const userData = JSON.parse(savedUser);
 
-    if (
-      userData.email === email &&
-      userData.password === password
-    ) {
+    if (userData.email === email && userData.password === password) {
       const loggedInUser = {
         name: userData.name,
         email: userData.email,
+        address: userData.address || "",
       };
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(loggedInUser)
-      );
+      localStorage.setItem("user", JSON.stringify(loggedInUser));
 
       setUser(loggedInUser);
 
@@ -97,7 +88,10 @@ export const AuthProvider = ({ children }) => {
 
   // Logout
   const logout = () => {
+    // Only remove the current login session
+    // registeredUser stays saved
     localStorage.removeItem("user");
+
     setUser(null);
   };
 

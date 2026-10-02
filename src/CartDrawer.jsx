@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 
 import { useCart } from "./CartContext";
+import { useNavigate } from "react-router-dom";
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const {
@@ -16,9 +17,16 @@ const CartDrawer = ({ isOpen, onClose }) => {
     cartTotal,
   } = useCart();
 
+  const navigate = useNavigate();
+
   if (!isOpen) {
     return null;
   }
+
+  const handleCheckout = () => {
+    onClose();
+    navigate("/checkout");
+  };
 
   return (
     <>
@@ -57,11 +65,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   key={item.id}
                   className="flex gap-4 border-b pb-5"
                 >
-
                   {/* Product image */}
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
-                      src={item.thumbnail || item.images?.[0]}
+                      src={
+                        item.thumbnail ||
+                        item.images?.[0]
+                      }
                       alt={item.title}
                       className="h-full w-full object-contain"
                     />
@@ -69,7 +79,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
                   {/* Product information */}
                   <div className="flex flex-1 flex-col">
-
                     <h3 className="line-clamp-2 text-sm font-semibold">
                       {item.title}
                     </h3>
@@ -80,7 +89,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
                     {/* Quantity */}
                     <div className="mt-3 flex items-center justify-between">
-
                       <div className="flex items-center rounded-lg border">
 
                         {/* Decrease */}
@@ -119,7 +127,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
                       >
                         <Trash2 size={18} />
                       </button>
-
                     </div>
                   </div>
                 </div>
@@ -151,9 +158,10 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
             {/* Checkout */}
             <button
+              onClick={handleCheckout}
               className="w-full rounded-xl bg-black py-3 font-semibold text-white hover:bg-gray-800"
             >
-              Proceed to Pay
+              Checkout
             </button>
 
           </div>

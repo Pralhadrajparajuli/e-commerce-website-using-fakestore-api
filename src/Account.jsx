@@ -7,7 +7,9 @@ const Account = () => {
   const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
+
   const [name, setName] = useState(user?.name || "");
+  const [address, setAddress] = useState(user?.address || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -16,6 +18,7 @@ const Account = () => {
 
   const handleEdit = () => {
     setName(user?.name || "");
+    setAddress(user?.address || "");
     setPassword("");
     setConfirmPassword("");
     setMessage("");
@@ -25,6 +28,7 @@ const Account = () => {
 
   const handleCancel = () => {
     setName(user?.name || "");
+    setAddress(user?.address || "");
     setPassword("");
     setConfirmPassword("");
     setError("");
@@ -38,6 +42,11 @@ const Account = () => {
 
     if (!name.trim()) {
       setError("Name is required.");
+      return;
+    }
+
+    if (!address.trim()) {
+      setError("Address is required.");
       return;
     }
 
@@ -68,6 +77,7 @@ const Account = () => {
     const updatedUser = {
       ...userData,
       name: name.trim(),
+      address: address.trim(),
       password: password,
     };
 
@@ -79,6 +89,7 @@ const Account = () => {
     const loggedInUser = {
       name: name.trim(),
       email: userData.email,
+      address: address.trim(),
     };
 
     localStorage.setItem(
@@ -137,6 +148,7 @@ const Account = () => {
           {isEditing ? (
             <div>
 
+              {/* Name */}
               <div className="mb-5">
                 <label className="mb-2 block text-sm font-medium">
                   Name
@@ -150,6 +162,7 @@ const Account = () => {
                 />
               </div>
 
+              {/* Email */}
               <div className="mb-5">
                 <label className="mb-2 block text-sm font-medium">
                   Email
@@ -163,6 +176,22 @@ const Account = () => {
                 />
               </div>
 
+              {/* Address */}
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-medium">
+                  Address
+                </label>
+
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  rows="3"
+                  placeholder="Enter your delivery address"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* New Password */}
               <div className="mb-5">
                 <label className="mb-2 block text-sm font-medium">
                   New Password
@@ -177,6 +206,7 @@ const Account = () => {
                 />
               </div>
 
+              {/* Confirm Password */}
               <div className="mb-8">
                 <label className="mb-2 block text-sm font-medium">
                   Confirm New Password
@@ -193,6 +223,7 @@ const Account = () => {
                 />
               </div>
 
+              {/* Buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={handleSave}
@@ -213,6 +244,7 @@ const Account = () => {
           ) : (
             <div>
 
+              {/* Name */}
               <div className="mb-5">
                 <p className="text-sm text-gray-500">
                   Name
@@ -223,7 +255,8 @@ const Account = () => {
                 </p>
               </div>
 
-              <div className="mb-8">
+              {/* Email */}
+              <div className="mb-5">
                 <p className="text-sm text-gray-500">
                   Email
                 </p>
@@ -233,6 +266,18 @@ const Account = () => {
                 </p>
               </div>
 
+              {/* Address */}
+              <div className="mb-8">
+                <p className="text-sm text-gray-500">
+                  Address
+                </p>
+
+                <p className="mt-1 text-lg font-semibold">
+                  {user?.address || "No address available"}
+                </p>
+              </div>
+
+              {/* Logout */}
               <button
                 onClick={handleLogout}
                 className="rounded-lg bg-red-500 px-6 py-3 font-semibold text-white hover:bg-red-600"

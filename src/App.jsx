@@ -8,6 +8,8 @@ import CategoryProducts from "./CategoryProducts";
 import Login from "./Login";
 import Account from "./Account";
 import Footer from "./Footer";
+import Checkout from "./Checkout";
+import Admin from "./Admin";
 // import Cart from "./Cart";
 
 const App = () => {
@@ -24,6 +26,8 @@ const App = () => {
         <Route path="/products/:category" element={<Products />} />
         <Route path="/login" element={<Login />} />
         <Route path="/account" element={ <Account />}/>
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/admin" element={<Admin />} />
         {/* <Route path="/cart" element={<Cart />}/> */}
       </Routes>
       <Footer/>

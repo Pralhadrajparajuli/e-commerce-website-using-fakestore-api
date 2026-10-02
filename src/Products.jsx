@@ -12,7 +12,7 @@ import { useWishlist } from "./WishlistContext";
 
 const Products = ({ saleOnly = false }) => {
   const [products, setProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1); 
 
   const productsPerPage = 9;
 
@@ -28,10 +28,17 @@ const Products = ({ saleOnly = false }) => {
     isInWishlist,
   } = useWishlist();
 
-  // Fetch products from DummyJSON
+  // Load products from localStorage or DummyJSON
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        const savedProducts = localStorage.getItem("products");
+
+        if (savedProducts) {
+          setProducts(JSON.parse(savedProducts));
+          return;
+        }
+
         const response = await fetch(
           "https://dummyjson.com/products?limit=0"
         );
@@ -42,6 +49,11 @@ const Products = ({ saleOnly = false }) => {
 
         const data = await response.json();
 
+        localStorage.setItem(
+          "products",
+          JSON.stringify(data.products)
+        );
+
         setProducts(data.products);
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -51,14 +63,8 @@ const Products = ({ saleOnly = false }) => {
     fetchProducts();
   }, []);
 
-  /*
-    Products on sale
-  */
   const saleProductIds = [1, 3, 5, 7, 9];
 
-  /*
-    Add sale information
-  */
   const productsWithSale = products.map((product) => {
     const isSale = saleProductIds.includes(product.id);
 
@@ -72,9 +78,6 @@ const Products = ({ saleOnly = false }) => {
     };
   });
 
-  /*
-    Filter products
-  */
   let displayedProducts = productsWithSale;
 
   // Search filter
@@ -83,9 +86,9 @@ const Products = ({ saleOnly = false }) => {
 
     displayedProducts = displayedProducts.filter(
       (product) =>
-        product.title.toLowerCase().includes(search) ||
-        product.description.toLowerCase().includes(search) ||
-        product.category.toLowerCase().includes(search)
+        product.title?.toLowerCase().includes(search) ||
+        product.description?.toLowerCase().includes(search) ||
+        product.category?.toLowerCase().includes(search)
     );
   }
 
@@ -103,16 +106,10 @@ const Products = ({ saleOnly = false }) => {
     );
   }
 
-  /*
-    Reset pagination when filter changes
-  */
   useEffect(() => {
     setCurrentPage(1);
   }, [category, saleOnly, searchText]);
 
-  /*
-    Pagination
-  */
   const lastProductIndex =
     currentPage * productsPerPage;
 
@@ -140,9 +137,6 @@ const Products = ({ saleOnly = false }) => {
     }
   };
 
-  /*
-    Page title
-  */
   const getTitle = () => {
     if (searchText) {
       return `Search results for "${searchText}"`;
@@ -188,10 +182,13 @@ const Products = ({ saleOnly = false }) => {
             {/* Image Box */}
             <div className="group relative h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
 
-              {/* Product Image */}
               <Link to={`/product/${product.id}`}>
                 <img
-                  src={product.thumbnail}
+                  src={
+                    product.thumbnail ||
+                    product.image ||
+                    product.images?.[0]
+                  }
                   alt={product.title}
                   className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                 />
@@ -227,7 +224,6 @@ const Products = ({ saleOnly = false }) => {
                 <ShoppingCart size={17} />
                 Add to Cart
               </button>
-
             </div>
 
             {/* Product Information */}
@@ -237,10 +233,8 @@ const Products = ({ saleOnly = false }) => {
                 {product.title}
               </h2>
 
-              {/* Sale Price */}
               {product.isSale ? (
                 <div className="mt-2 flex items-center gap-2">
-
                   <p className="text-lg font-bold text-red-500">
                     ${product.salePrice}
                   </p>
@@ -248,7 +242,6 @@ const Products = ({ saleOnly = false }) => {
                   <p className="text-sm text-gray-400 line-through">
                     ${product.originalPrice}
                   </p>
-
                 </div>
               ) : (
                 <p className="mt-2 text-lg font-bold text-gray-900">
@@ -257,7 +250,6 @@ const Products = ({ saleOnly = false }) => {
               )}
 
             </Link>
-
           </div>
         ))}
 
@@ -266,7 +258,6 @@ const Products = ({ saleOnly = false }) => {
       {/* No Products */}
       {displayedProducts.length === 0 && (
         <div className="py-20 text-center">
-
           <p className="text-lg font-medium text-gray-700">
             No products found
           </p>
@@ -276,7 +267,6 @@ const Products = ({ saleOnly = false }) => {
               Try searching with another product name.
             </p>
           )}
-
         </div>
       )}
 

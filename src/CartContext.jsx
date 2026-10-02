@@ -39,7 +39,7 @@ export const CartProvider = ({ children }) => {
 
     showToast(`added to cart`);
   };
-
+  
   // Increase quantity
   const increaseQuantity = (id) => {
     setCart((currentCart) =>

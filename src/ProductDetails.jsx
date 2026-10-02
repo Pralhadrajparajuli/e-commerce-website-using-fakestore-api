@@ -21,9 +21,31 @@ const ProductDetails = () => {
     isInWishlist,
   } = useWishlist();
 
+  // Sale product IDs
+  const saleProductIds = [1, 3, 5, 7, 9];
+
+  // Fetch product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
+        // First check localStorage
+        const savedProducts = localStorage.getItem("products");
+
+        if (savedProducts) {
+          const products = JSON.parse(savedProducts);
+
+          const foundProduct = products.find(
+            (product) => String(product.id) === String(id)
+          );
+
+          if (foundProduct) {
+            setProduct(foundProduct);
+            return;
+          }
+        }
+
+        // If product is not found in localStorage,
+        // fetch from DummyJSON
         const response = await fetch(
           `https://dummyjson.com/products/${id}`
         );
@@ -36,13 +58,14 @@ const ProductDetails = () => {
 
         setProduct(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching product:", error);
       }
     };
 
     fetchProduct();
   }, [id]);
 
+  // Loading
   if (!product) {
     return (
       <p className="py-20 text-center">
@@ -50,6 +73,17 @@ const ProductDetails = () => {
       </p>
     );
   }
+
+  // Check if product is on sale
+  const isSale = saleProductIds.includes(product.id);
+
+  // Original price
+  const originalPrice = Number(product.price);
+
+  // Sale price
+  const salePrice = isSale
+    ? Number((originalPrice * 0.8).toFixed(2))
+    : originalPrice;
 
   const productInWishlist = isInWishlist(product.id);
 
@@ -65,11 +99,17 @@ const ProductDetails = () => {
 
         {/* LEFT - Product Image */}
         <div className="flex h-[600px] items-center justify-center rounded-2xl bg-gray-100 p-10">
+
           <img
-            src={product.images?.[0] || product.thumbnail}
+            src={
+              product.images?.[0] ||
+              product.thumbnail ||
+              product.image
+            }
             alt={product.title}
             className="h-full w-full object-contain"
           />
+
         </div>
 
         {/* RIGHT - Product Information */}
@@ -81,17 +121,42 @@ const ProductDetails = () => {
           </h1>
 
           {/* Price */}
-          <p className="mt-5 text-2xl font-bold text-gray-900">
-            ${product.price}
-          </p>
+          {isSale ? (
+            <div className="mt-5 flex items-center gap-3">
+
+              {/* Sale Price */}
+              <p className="text-2xl font-bold text-red-500">
+                ${salePrice}
+              </p>
+
+              {/* Original Price */}
+              <p className="text-lg text-gray-400 line-through">
+                ${originalPrice}
+              </p>
+
+            </div>
+          ) : (
+            <p className="mt-5 text-2xl font-bold text-gray-900">
+              ${originalPrice}
+            </p>
+          )}
+
+          {/* Sale Badge */}
+          {isSale && (
+            <span className="mt-3 w-fit rounded-md bg-red-500 px-3 py-1 text-xs font-bold text-white">
+              SALE
+            </span>
+          )}
 
           {/* Size */}
           <div className="mt-8">
+
             <h3 className="mb-3 font-semibold text-gray-900">
               Size
             </h3>
 
             <div className="flex gap-3">
+
               {["S", "M", "L", "XL"].map((size) => (
                 <button
                   key={size}
@@ -105,7 +170,9 @@ const ProductDetails = () => {
                   {size}
                 </button>
               ))}
+
             </div>
+
           </div>
 
           {/* Quantity + Add to Cart + Favorite */}
