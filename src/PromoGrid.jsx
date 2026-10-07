@@ -98,5 +98,4 @@ const PromoGrid = ({ products }) => {
     </section>
   );
 };
-
 export default PromoGrid;

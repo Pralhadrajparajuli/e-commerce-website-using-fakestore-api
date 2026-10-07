@@ -37,9 +37,9 @@ export const CartProvider = ({ children }) => {
       ];
     });
 
-    showToast(`added to cart`);
+    showToast("added to cart");
   };
-  
+
   // Increase quantity
   const increaseQuantity = (id) => {
     setCart((currentCart) =>
@@ -83,6 +83,11 @@ export const CartProvider = ({ children }) => {
     showToast("Product removed from cart", "error");
   };
 
+  // Clear entire cart after successful payment
+  const clearCart = () => {
+    setCart([]);
+  };
+
   // Total number of products
   const cartCount = cart.reduce(
     (total, item) => total + item.quantity,
@@ -103,6 +108,7 @@ export const CartProvider = ({ children }) => {
         increaseQuantity,
         decreaseQuantity,
         removeFromCart,
+        clearCart,
         cartCount,
         cartTotal,
       }}

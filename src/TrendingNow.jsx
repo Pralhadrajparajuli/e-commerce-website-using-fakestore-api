@@ -1,16 +1,18 @@
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import { useCart } from "./CartContext";
+import useCartStore from "./store/cartStore";
 import { useWishlist } from "./WishlistContext";
+import { useToast } from "./ToastContext";
 
 const TrendingNow = ({ products }) => {
-  const { addToCart } = useCart();
+  const addToCart = useCartStore(
+    (state) => state.addToCart
+  );
 
-  const {
-    toggleWishlist,
-    isInWishlist,
-  } = useWishlist();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+
+  const { showToast } = useToast();
 
   // Show only first 8 products
   const trendingProducts = products.slice(0, 8);
@@ -83,7 +85,10 @@ const TrendingNow = ({ products }) => {
 
               {/* Add to Cart */}
               <button
-                onClick={() => addToCart(product)}
+                onClick={() => {
+                  addToCart(product);
+                  showToast("Added to cart");
+                }}
                 className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-3 items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-gray-800"
               >
                 <ShoppingCart size={17} />

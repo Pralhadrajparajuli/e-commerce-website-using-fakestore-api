@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useCart } from "./CartContext";
+import useCartStore from "./store/cartStore";
 import { useWishlist } from "./WishlistContext";
 import { useAuth } from "./AuthContext";
 
@@ -16,25 +16,36 @@ import CartDrawer from "./CartDrawer";
 import WishlistDrawer from "./WishlistDrawer";
 
 const Header = () => {
-  // Cart data
-  const { cartCount } = useCart();
+  // Cart data from Zustand
+  const cart = useCartStore((state) => state.cart);
+
+  // Calculate total cart quantity
+  const cartCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
 
   // Wishlist data
   const { wishlistCount } = useWishlist();
 
-  // Authentication data 
+  // Authentication data
   const { user, logout } = useAuth();
 
   // Drawer states
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
+
   // Product dropdown
   const [productsOpen, setProductsOpen] = useState(false);
+
   // User dropdown
   const [userOpen, setUserOpen] = useState(false);
+
   // Search
   const [searchText, setSearchText] = useState("");
+
   const navigate = useNavigate();
+
   // Search submit
   const handleSearch = (e) => {
     e.preventDefault();
@@ -83,7 +94,6 @@ const Header = () => {
 
             {/* Products Dropdown */}
             <div className="relative">
-
               <button
                 onClick={() => setProductsOpen(!productsOpen)}
                 className="flex items-center gap-1 whitespace-nowrap hover:text-blue-600"
@@ -101,7 +111,6 @@ const Header = () => {
               {productsOpen && (
                 <div className="absolute left-0 top-full z-50 mt-3 w-56 rounded-lg border bg-white py-2 shadow-lg">
 
-                  {/* Smartphones */}
                   <Link
                     to="/products/smartphones"
                     onClick={() => setProductsOpen(false)}
@@ -110,7 +119,6 @@ const Header = () => {
                     Smartphones
                   </Link>
 
-                  {/* Laptops */}
                   <Link
                     to="/products/laptops"
                     onClick={() => setProductsOpen(false)}
@@ -119,7 +127,6 @@ const Header = () => {
                     Laptops
                   </Link>
 
-                  {/* Tablets */}
                   <Link
                     to="/products/tablets"
                     onClick={() => setProductsOpen(false)}
@@ -127,7 +134,7 @@ const Header = () => {
                   >
                     Tablets
                   </Link>
-                  {/* Men's Shoes */}
+
                   <Link
                     to="/products/mens-shoes"
                     onClick={() => setProductsOpen(false)}
@@ -136,7 +143,6 @@ const Header = () => {
                     Men's Shoes
                   </Link>
 
-                  {/* Women's Shoes */}
                   <Link
                     to="/products/womens-shoes"
                     onClick={() => setProductsOpen(false)}
@@ -145,7 +151,6 @@ const Header = () => {
                     Women's Shoes
                   </Link>
 
-                  {/* Furniture */}
                   <Link
                     to="/products/furniture"
                     onClick={() => setProductsOpen(false)}
@@ -154,7 +159,6 @@ const Header = () => {
                     Furniture
                   </Link>
 
-                  {/* Groceries */}
                   <Link
                     to="/products/groceries"
                     onClick={() => setProductsOpen(false)}
@@ -163,7 +167,6 @@ const Header = () => {
                     Groceries
                   </Link>
 
-                  {/* Beauty */}
                   <Link
                     to="/products/beauty"
                     onClick={() => setProductsOpen(false)}
@@ -174,7 +177,6 @@ const Header = () => {
 
                 </div>
               )}
-
             </div>
 
             {/* Shop */}
@@ -244,7 +246,6 @@ const Header = () => {
 
             {/* User */}
             <div className="relative">
-
               <button
                 onClick={() => setUserOpen(!userOpen)}
                 className="rounded-lg border p-2.5 transition hover:bg-gray-100 hover:text-blue-600"
@@ -252,13 +253,11 @@ const Header = () => {
                 <User size={22} />
               </button>
 
-              {/* User Dropdown */}
               {userOpen && (
                 <div className="absolute right-0 top-full z-50 mt-3 w-52 rounded-lg border bg-white py-2 shadow-lg">
 
                   {user ? (
                     <>
-                      {/* Logged In User */}
                       <div className="border-b px-4 py-3">
                         <p className="text-xs text-gray-500">
                           Signed in as
@@ -269,7 +268,6 @@ const Header = () => {
                         </p>
                       </div>
 
-                      {/* Account */}
                       <Link
                         to="/account"
                         onClick={() => setUserOpen(false)}
@@ -278,7 +276,6 @@ const Header = () => {
                         My Account
                       </Link>
 
-                      {/* Logout */}
                       <button
                         onClick={handleLogout}
                         className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-100"
@@ -288,7 +285,6 @@ const Header = () => {
                     </>
                   ) : (
                     <>
-                      {/* Sign In */}
                       <Link
                         to="/login"
                         onClick={() => setUserOpen(false)}
@@ -297,7 +293,6 @@ const Header = () => {
                         Sign In
                       </Link>
 
-                      {/* Register */}
                       <Link
                         to="/login"
                         onClick={() => setUserOpen(false)}
@@ -310,7 +305,6 @@ const Header = () => {
 
                 </div>
               )}
-
             </div>
 
           </div>

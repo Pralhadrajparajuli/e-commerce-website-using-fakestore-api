@@ -59,4 +59,4 @@ const CategorySection = ({ products }) => {
   );
 };
 
-export default CategorySection;
+export default CategorySection;  

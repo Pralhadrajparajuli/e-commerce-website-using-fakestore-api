@@ -10,6 +10,7 @@ import Account from "./Account";
 import Footer from "./Footer";
 import Checkout from "./Checkout";
 import Admin from "./Admin";
+import Payment from "./Payment";
 // import Cart from "./Cart";
 
 const App = () => {
@@ -28,6 +29,7 @@ const App = () => {
         <Route path="/account" element={ <Account />}/>
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/payment" element={<Payment />} />
         {/* <Route path="/cart" element={<Cart />}/> */}
       </Routes>
       <Footer/>

@@ -7,28 +7,34 @@ import {
 
 import { Heart, ShoppingCart } from "lucide-react";
 
-import { useCart } from "./CartContext";
+import useCartStore from "./store/cartStore";
 import { useWishlist } from "./WishlistContext";
+import { useToast } from "./ToastContext";
 
 const Products = ({ saleOnly = false }) => {
   const [products, setProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1); 
-
-  const productsPerPage = 9;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { category } = useParams();
-
   const [searchParams] = useSearchParams();
+
   const searchText = searchParams.get("search") || "";
 
-  const { addToCart } = useCart();
+  const addToCart = useCartStore(
+    (state) => state.addToCart
+  );
 
   const {
     toggleWishlist,
     isInWishlist,
   } = useWishlist();
 
-  // Load products from localStorage or DummyJSON
+  const { showToast } = useToast();
+
+  const productsPerPage = 9;
+
+  const saleProductIds = [1, 3, 5, 7, 9];
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -49,254 +55,194 @@ const Products = ({ saleOnly = false }) => {
 
         const data = await response.json();
 
+        setProducts(data.products);
+
         localStorage.setItem(
           "products",
           JSON.stringify(data.products)
         );
-
-        setProducts(data.products);
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error(error);
       }
     };
 
     fetchProducts();
   }, []);
 
-  const saleProductIds = [1, 3, 5, 7, 9];
+  // Filter products
+  let filteredProducts = products;
 
-  const productsWithSale = products.map((product) => {
-    const isSale = saleProductIds.includes(product.id);
-
-    return {
-      ...product,
-      isSale,
-      originalPrice: product.price,
-      salePrice: isSale
-        ? Number((product.price * 0.8).toFixed(2))
-        : product.price,
-    };
-  });
-
-  let displayedProducts = productsWithSale;
-
-  // Search filter
-  if (searchText) {
-    const search = searchText.toLowerCase();
-
-    displayedProducts = displayedProducts.filter(
-      (product) =>
-        product.title?.toLowerCase().includes(search) ||
-        product.description?.toLowerCase().includes(search) ||
-        product.category?.toLowerCase().includes(search)
-    );
-  }
-
-  // Category filter
   if (category) {
-    displayedProducts = displayedProducts.filter(
-      (product) => product.category === category
+    filteredProducts = filteredProducts.filter(
+      (product) =>
+        product.category.toLowerCase() ===
+        category.toLowerCase()
     );
   }
 
-  // Sale filter
+  if (searchText) {
+    filteredProducts = filteredProducts.filter((product) =>
+      product.title
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+    );
+  }
+
   if (saleOnly) {
-    displayedProducts = displayedProducts.filter(
-      (product) => product.isSale
+    filteredProducts = filteredProducts.filter((product) =>
+      saleProductIds.includes(product.id)
     );
   }
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [category, saleOnly, searchText]);
-
-  const lastProductIndex =
-    currentPage * productsPerPage;
-
-  const firstProductIndex =
-    lastProductIndex - productsPerPage;
-
-  const currentProducts = displayedProducts.slice(
-    firstProductIndex,
-    lastProductIndex
-  );
-
+  // Pagination
   const totalPages = Math.ceil(
-    displayedProducts.length / productsPerPage
+    filteredProducts.length / productsPerPage
   );
 
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+  const startIndex =
+    (currentPage - 1) * productsPerPage;
+
+  const currentProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + productsPerPage
+  );
+
+  const handleAddToCart = (product) => {
+    addToCart(product);
+    showToast("Added to cart");
   };
 
-  const previousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  const handleWishlist = (product) => {
+    const alreadyInWishlist = isInWishlist(product.id);
 
-  const getTitle = () => {
-    if (searchText) {
-      return `Search results for "${searchText}"`;
-    }
+    toggleWishlist(product);
 
-    if (saleOnly) {
-      return "Sale Products";
+    if (alreadyInWishlist) {
+      showToast("Removed from wishlist", "error");
+    } else {
+      showToast("Added to wishlist");
     }
-
-    if (!category) {
-      return "All Products";
-    }
-
-    return category;
   };
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
+      <h1 className="mb-8 text-3xl font-bold text-gray-900">
+        {category
+          ? category.charAt(0).toUpperCase() +
+            category.slice(1)
+          : saleOnly
+          ? "Sale"
+          : "All Products"}
+      </h1>
 
-      {/* Title */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold capitalize text-gray-900">
-          {getTitle()}
-        </h1>
+      {/* Products */}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        {currentProducts.map((product) => {
+          const isSale = saleProductIds.includes(product.id);
 
-        <p className="mt-2 text-gray-500">
-          {searchText
-            ? "Products matching your search"
-            : saleOnly
-            ? "Grab these products at special prices"
-            : category
-            ? `Explore our ${category} collection`
-            : "Explore our complete collection of products"}
-        </p>
-      </div>
+          const salePrice = isSale
+            ? product.price * 0.8
+            : product.price;
 
-      {/* Product Grid */}
-      <div className="grid grid-cols-3 gap-x-6 gap-y-10">
+          return (
+            <div
+              key={product.id}
+              className="group"
+            >
+              {/* Image */}
+              <div className="relative">
+                <Link to={`/product/${product.id}`}>
+                  <div className="h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
+                    <img
+                      src={
+                        product.thumbnail ||
+                        product.images?.[0]
+                      }
+                      alt={product.title}
+                      className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                </Link>
 
-        {currentProducts.map((product) => (
-          <div key={product.id}>
+                {/* Wishlist */}
+                <button
+                  onClick={() =>
+                    handleWishlist(product)
+                  }
+                  className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-gray-100"
+                >
+                  <Heart
+                    size={20}
+                    className={
+                      isInWishlist(product.id)
+                        ? "fill-red-500 text-red-500"
+                        : "text-gray-700"
+                    }
+                  />
+                </button>
 
-            {/* Image Box */}
-            <div className="group relative h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
+                {/* Add to Cart */}
+                <button
+                  onClick={() =>
+                    handleAddToCart(product)
+                  }
+                  className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-3 items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-gray-800"
+                >
+                  <ShoppingCart size={17} />
+                  Add to Cart
+                </button>
+              </div>
 
+              {/* Product Information */}
               <Link to={`/product/${product.id}`}>
-                <img
-                  src={
-                    product.thumbnail ||
-                    product.image ||
-                    product.images?.[0]
-                  }
-                  alt={product.title}
-                  className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
-                />
-              </Link>
+                <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900 transition group-hover:text-blue-600">
+                  {product.title}
+                </h3>
 
-              {/* Sale Badge */}
-              {product.isSale && (
-                <span className="absolute left-4 top-4 rounded-md bg-red-500 px-3 py-1 text-xs font-bold text-white">
-                  SALE
-                </span>
-              )}
+                <div className="mt-2">
+                  {isSale ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-red-600">
+                        ${salePrice.toFixed(2)}
+                      </span>
 
-              {/* Wishlist */}
-              <button
-                onClick={() => toggleWishlist(product)}
-                className="absolute right-4 top-4 rounded-full bg-white p-2 text-gray-700 shadow-sm transition hover:text-red-500"
-              >
-                <Heart
-                  size={20}
-                  className={
-                    isInWishlist(product.id)
-                      ? "fill-red-500 text-red-500"
-                      : "text-gray-700"
-                  }
-                />
-              </button>
-
-              {/* Add to Cart */}
-              <button
-                onClick={() => addToCart(product)}
-                className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-2 items-center gap-2 rounded-lg bg-black px-5 py-2 text-sm font-medium text-white opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100"
-              >
-                <ShoppingCart size={17} />
-                Add to Cart
-              </button>
-            </div>
-
-            {/* Product Information */}
-            <Link to={`/product/${product.id}`}>
-
-              <h2 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900 hover:text-blue-600">
-                {product.title}
-              </h2>
-
-              {product.isSale ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <p className="text-lg font-bold text-red-500">
-                    ${product.salePrice}
-                  </p>
-
-                  <p className="text-sm text-gray-400 line-through">
-                    ${product.originalPrice}
-                  </p>
+                      <span className="text-sm text-gray-400 line-through">
+                        ${product.price}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-900">
+                      ${product.price}
+                    </p>
+                  )}
                 </div>
-              ) : (
-                <p className="mt-2 text-lg font-bold text-gray-900">
-                  ${product.price}
-                </p>
-              )}
-
-            </Link>
-          </div>
-        ))}
-
+              </Link>
+            </div>
+          );
+        })}
       </div>
-
-      {/* No Products */}
-      {displayedProducts.length === 0 && (
-        <div className="py-20 text-center">
-          <p className="text-lg font-medium text-gray-700">
-            No products found
-          </p>
-
-          {searchText && (
-            <p className="mt-2 text-gray-500">
-              Try searching with another product name.
-            </p>
-          )}
-        </div>
-      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-12 flex items-center justify-center gap-6">
-
-          <button
-            onClick={previousPage}
-            disabled={currentPage === 1}
-            className="rounded-lg border px-5 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ← Previous
-          </button>
-
-          <span className="font-medium text-gray-700">
-            Page {currentPage} of {totalPages}
-          </span>
-
-          <button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            className="rounded-lg border px-5 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next →
-          </button>
-
+        <div className="mt-12 flex justify-center gap-2">
+          {Array.from(
+            { length: totalPages },
+            (_, index) => index + 1
+          ).map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`rounded-lg px-4 py-2 ${
+                currentPage === page
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
         </div>
       )}
-
     </section>
   );
 };

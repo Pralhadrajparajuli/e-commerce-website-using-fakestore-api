@@ -2,40 +2,41 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import { useCart } from "./CartContext";
+import useCartStore from "./store/cartStore";
 import { useWishlist } from "./WishlistContext";
+import { useToast } from "./ToastContext";
 
 const ProductDetails = () => {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
-  const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState("");
 
-  // Cart
-  const { addToCart } = useCart();
+  const addToCart = useCartStore(
+    (state) => state.addToCart
+  );
 
-  // Wishlist
   const {
     toggleWishlist,
     isInWishlist,
   } = useWishlist();
 
-  // Sale product IDs
+  const { showToast } = useToast();
+
   const saleProductIds = [1, 3, 5, 7, 9];
 
-  // Fetch product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        // First check localStorage
-        const savedProducts = localStorage.getItem("products");
+        const savedProducts =
+          localStorage.getItem("products");
 
         if (savedProducts) {
-          const products = JSON.parse(savedProducts);
+          const saved = JSON.parse(savedProducts);
 
-          const foundProduct = products.find(
-            (product) => String(product.id) === String(id)
+          const foundProduct = saved.find(
+            (item) => item.id === Number(id)
           );
 
           if (foundProduct) {
@@ -44,8 +45,6 @@ const ProductDetails = () => {
           }
         }
 
-        // If product is not found in localStorage,
-        // fetch from DummyJSON
         const response = await fetch(
           `https://dummyjson.com/products/${id}`
         );
@@ -58,198 +57,177 @@ const ProductDetails = () => {
 
         setProduct(data);
       } catch (error) {
-        console.error("Error fetching product:", error);
+        console.error(error);
       }
     };
 
     fetchProduct();
   }, [id]);
 
-  // Loading
   if (!product) {
     return (
-      <p className="py-20 text-center">
-        Loading product...
-      </p>
+      <div className="flex min-h-[400px] items-center justify-center">
+        <p>Loading product...</p>
+      </div>
     );
   }
 
-  // Check if product is on sale
   const isSale = saleProductIds.includes(product.id);
 
-  // Original price
-  const originalPrice = Number(product.price);
-
-  // Sale price
   const salePrice = isSale
-    ? Number((originalPrice * 0.8).toFixed(2))
-    : originalPrice;
+    ? product.price * 0.8
+    : product.price;
 
-  const productInWishlist = isInWishlist(product.id);
-
-  // Add product to cart
   const handleAddToCart = () => {
     addToCart(product, quantity);
+    showToast("Added to cart");
+  };
+
+  const handleWishlist = () => {
+    const alreadyInWishlist = isInWishlist(product.id);
+
+    toggleWishlist(product);
+
+    if (alreadyInWishlist) {
+      showToast("Removed from wishlist", "error");
+    } else {
+      showToast("Added to wishlist");
+    }
   };
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
-
-      <div className="grid grid-cols-2 gap-12">
-
-        {/* LEFT - Product Image */}
-        <div className="flex h-[600px] items-center justify-center rounded-2xl bg-gray-100 p-10">
-
+      <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+        {/* Product Image */}
+        <div className="relative flex min-h-[500px] items-center justify-center rounded-2xl bg-gray-100 p-10">
           <img
             src={
-              product.images?.[0] ||
               product.thumbnail ||
-              product.image
+              product.images?.[0]
             }
             alt={product.title}
-            className="h-full w-full object-contain"
+            className="max-h-[450px] w-full object-contain"
           />
 
+          {/* Wishlist */}
+          <button
+            onClick={handleWishlist}
+            className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100"
+          >
+            <Heart
+              size={24}
+              className={
+                isInWishlist(product.id)
+                  ? "fill-red-500 text-red-500"
+                  : "text-gray-700"
+              }
+            />
+          </button>
         </div>
 
-        {/* RIGHT - Product Information */}
+        {/* Product Information */}
         <div className="flex flex-col justify-center">
+          <p className="mb-3 text-sm capitalize text-gray-500">
+            {product.category}
+          </p>
 
-          {/* Product Title */}
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-4xl font-bold text-gray-900">
             {product.title}
           </h1>
 
           {/* Price */}
-          {isSale ? (
-            <div className="mt-5 flex items-center gap-3">
+          <div className="mt-5">
+            {isSale ? (
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-red-600">
+                  ${salePrice.toFixed(2)}
+                </span>
 
-              {/* Sale Price */}
-              <p className="text-2xl font-bold text-red-500">
-                ${salePrice}
-              </p>
+                <span className="text-lg text-gray-400 line-through">
+                  ${product.price}
+                </span>
+              </div>
+            ) : (
+              <span className="text-3xl font-bold text-gray-900">
+                ${product.price}
+              </span>
+            )}
+          </div>
 
-              {/* Original Price */}
-              <p className="text-lg text-gray-400 line-through">
-                ${originalPrice}
-              </p>
-
-            </div>
-          ) : (
-            <p className="mt-5 text-2xl font-bold text-gray-900">
-              ${originalPrice}
-            </p>
-          )}
-
-          {/* Sale Badge */}
-          {isSale && (
-            <span className="mt-3 w-fit rounded-md bg-red-500 px-3 py-1 text-xs font-bold text-white">
-              SALE
-            </span>
-          )}
+          <p className="mt-6 leading-7 text-gray-600">
+            {product.description}
+          </p>
 
           {/* Size */}
           <div className="mt-8">
-
-            <h3 className="mb-3 font-semibold text-gray-900">
-              Size
+            <h3 className="mb-3 font-semibold">
+              Select Size
             </h3>
 
             <div className="flex gap-3">
-
-              {["S", "M", "L", "XL"].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`rounded-lg border px-5 py-2 ${
-                    selectedSize === size
-                      ? "border-black bg-black text-white"
-                      : "border-gray-300 hover:border-black"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
-
+              {["S", "M", "L", "XL"].map(
+                (size) => (
+                  <button
+                    key={size}
+                    onClick={() =>
+                      setSelectedSize(size)
+                    }
+                    className={`rounded-lg border px-5 py-2 ${
+                      selectedSize === size
+                        ? "border-black bg-black text-white"
+                        : "border-gray-300 hover:border-black"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                )
+              )}
             </div>
-
           </div>
 
-          {/* Quantity + Add to Cart + Favorite */}
-          <div className="mt-8 flex gap-3">
+          {/* Quantity */}
+          <div className="mt-8">
+            <h3 className="mb-3 font-semibold">
+              Quantity
+            </h3>
 
-            {/* Quantity */}
-            <div className="flex items-center rounded-lg border border-gray-300">
-
+            <div className="flex w-fit items-center rounded-lg border">
               <button
                 onClick={() =>
-                  setQuantity((quantity) =>
-                    Math.max(1, quantity - 1)
+                  setQuantity((q) =>
+                    Math.max(1, q - 1)
                   )
                 }
-                className="px-4 py-3 text-xl hover:bg-gray-100"
+                className="px-4 py-2 text-lg"
               >
                 −
               </button>
 
-              <span className="min-w-12 px-4 text-center font-medium">
+              <span className="px-4">
                 {quantity}
               </span>
 
               <button
                 onClick={() =>
-                  setQuantity((quantity) => quantity + 1)
+                  setQuantity((q) => q + 1)
                 }
-                className="px-4 py-3 text-xl hover:bg-gray-100"
+                className="px-4 py-2 text-lg"
               >
                 +
               </button>
-
             </div>
-
-            {/* Add to Cart */}
-            <button
-              onClick={handleAddToCart}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-black px-6 py-3 font-semibold text-white hover:bg-gray-800"
-            >
-              <ShoppingCart size={20} />
-              Add to Cart
-            </button>
-
-            {/* Wishlist */}
-            <button
-              onClick={() => toggleWishlist(product)}
-              className="flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 hover:bg-gray-100"
-            >
-              <Heart
-                size={22}
-                className={
-                  productInWishlist
-                    ? "fill-red-500 text-red-500"
-                    : "text-gray-700"
-                }
-              />
-            </button>
-
           </div>
 
-          {/* Description */}
-          <div className="mt-10 border-t pt-6">
-
-            <h2 className="font-semibold text-gray-900">
-              Product Description
-            </h2>
-
-            <p className="mt-3 leading-7 text-gray-600">
-              {product.description}
-            </p>
-
-          </div>
-
+          {/* Add to Cart */}
+          <button
+            onClick={handleAddToCart}
+            className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 font-semibold text-white transition hover:bg-gray-800"
+          >
+            <ShoppingCart size={20} />
+            Add to Cart
+          </button>
         </div>
-
       </div>
-
     </section>
   );
 };

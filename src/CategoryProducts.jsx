@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import { useCart } from "./CartContext";
+import useCartStore from "./store/cartStore";
 import { useWishlist } from "./WishlistContext";
 
 const CategoryProducts = () => {
@@ -10,7 +10,9 @@ const CategoryProducts = () => {
 
   const [products, setProducts] = useState([]);
 
-  const { addToCart } = useCart();
+  const addToCart = useCartStore(
+    (state) => state.addToCart
+  );
 
   const {
     toggleWishlist,

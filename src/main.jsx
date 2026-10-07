@@ -4,7 +4,6 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 
-import { CartProvider } from "./CartContext";
 import { WishlistProvider } from "./WishlistContext";
 import { AuthProvider } from "./AuthContext";
 import { ToastProvider } from "./ToastContext";
@@ -14,14 +13,12 @@ import "./index.css";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-    <ToastProvider>
-      <AuthProvider>
-        <CartProvider>
+      <ToastProvider>
+        <AuthProvider>
           <WishlistProvider>
             <App />
           </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
+        </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
   </StrictMode>

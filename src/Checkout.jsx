@@ -1,11 +1,24 @@
-import { useCart } from "./CartContext";
+import { useState } from "react";
+import useCartStore from "./store/cartStore";
 import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Checkout = () => {
-  const { cart, cartTotal } = useCart();
+  const cart = useCartStore((state) => state.cart);
+  const clearCart = useCartStore((state) => state.clearCart);
+
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState("");
+
+  const cartTotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
 
   const deliveryCharge = cartTotal >= 100 ? 0 : 10;
   const total = cartTotal + deliveryCharge;
@@ -32,10 +45,30 @@ const Checkout = () => {
     );
   }
 
+  const handlePayment = () => {
+    if (!paymentMethod) {
+      setPaymentMessage("Please select a payment method.");
+      return;
+    }
+
+    setProcessing(true);
+    setPaymentMessage("");
+
+    // Frontend-only fake payment
+    setTimeout(() => {
+      setProcessing(false);
+
+      // Clear cart after successful payment
+      clearCart();
+
+      setPaymentMessage(
+        `Payment successful using ${paymentMethod}!`
+      );
+    }, 1500);
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-
-      {/* Page title */}
       <h1 className="mb-8 text-3xl font-bold">
         Checkout
       </h1>
@@ -118,7 +151,6 @@ const Checkout = () => {
                   className="flex gap-4 border-b pb-5 last:border-b-0 last:pb-0"
                 >
 
-                  {/* Image */}
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
                       src={
@@ -130,7 +162,6 @@ const Checkout = () => {
                     />
                   </div>
 
-                  {/* Details */}
                   <div className="flex flex-1 justify-between">
 
                     <div>
@@ -210,26 +241,113 @@ const Checkout = () => {
               </span>
             </div>
 
-            {/* Payment */}
-            <button
-              disabled={!user?.address}
-              className={`w-full rounded-xl py-3 font-semibold text-white ${
-                user?.address
-                  ? "bg-black hover:bg-gray-800"
-                  : "cursor-not-allowed bg-gray-400"
-              }`}
-            >
-              Proceed to Payment
-            </button>
+            {/* Payment button */}
+            {!showPayment && (
+              <>
+                <button
+                  onClick={() => setShowPayment(true)}
+                  disabled={!user?.address}
+                  className={`w-full rounded-xl py-3 font-semibold text-white ${
+                    user?.address
+                      ? "bg-black hover:bg-gray-800"
+                      : "cursor-not-allowed bg-gray-400"
+                  }`}
+                >
+                  Proceed to Payment
+                </button>
 
-            {!user?.address && (
-              <p className="mt-3 text-center text-sm text-red-500">
-                Please add a shipping address first.
-              </p>
+                {!user?.address && (
+                  <p className="mt-3 text-center text-sm text-red-500">
+                    Please add a shipping address first.
+                  </p>
+                )}
+              </>
+            )}
+
+            {/* Payment options */}
+            {showPayment && (
+              <div className="mt-4">
+
+                <h3 className="mb-4 font-bold">
+                  Select Payment Method
+                </h3>
+
+                {/* eSewa */}
+                <button
+                  onClick={() => setPaymentMethod("eSewa")}
+                  className={`mb-3 w-full rounded-xl border p-4 text-left ${
+                    paymentMethod === "eSewa"
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <p className="font-bold text-green-600">
+                    eSewa
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    Pay using eSewa wallet
+                  </p>
+                </button>
+
+                {/* Khalti */}
+                <button
+                  onClick={() => setPaymentMethod("Khalti")}
+                  className={`mb-4 w-full rounded-xl border p-4 text-left ${
+                    paymentMethod === "Khalti"
+                      ? "border-purple-500 bg-purple-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <p className="font-bold text-purple-600">
+                    Khalti
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    Pay using Khalti wallet
+                  </p>
+                </button>
+
+                {/* Payment message */}
+                {paymentMessage && (
+                  <div
+                    className={`mb-4 rounded-lg p-3 text-center text-sm ${
+                      paymentMessage.includes("successful")
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {paymentMessage}
+                  </div>
+                )}
+
+                {/* Pay button */}
+                <button
+                  onClick={handlePayment}
+                  disabled={processing}
+                  className="w-full rounded-xl bg-black py-3 font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {processing
+                    ? "Processing Payment..."
+                    : `Pay $${total.toFixed(2)}`}
+                </button>
+
+                {/* Back button */}
+                <button
+                  onClick={() => {
+                    setShowPayment(false);
+                    setPaymentMethod("");
+                    setPaymentMessage("");
+                  }}
+                  className="mt-3 w-full rounded-xl border border-gray-300 py-3 font-semibold hover:bg-gray-100"
+                >
+                  Back
+                </button>
+
+              </div>
             )}
 
           </div>
-
         </div>
 
       </div>
