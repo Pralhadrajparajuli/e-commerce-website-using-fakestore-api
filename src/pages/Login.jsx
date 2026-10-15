@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-import { useAuth } from "./AuthContext";
+import useAuthStore from "../store/authStore";
 
 const Login = () => {
   const navigate = useNavigate();
 
-  const { login, register } = useAuth();
+  // Zustand: Authentication
+  const login = useAuthStore((state) => state.login);
+  const register = useAuthStore((state) => state.register);
 
-  // "login" or "register"
+  // Login or register
   const [mode, setMode] = useState("login");
 
   const [name, setName] = useState("");
@@ -111,7 +113,9 @@ const Login = () => {
           {/* NAME - ONLY FOR REGISTER */}
           {mode === "register" && (
             <div>
-              <label className="mb-2 block text-sm font-medium">Name</label>
+              <label className="mb-2 block text-sm font-medium">
+                Name
+              </label>
 
               <input
                 type="text"
@@ -126,7 +130,9 @@ const Login = () => {
 
           {/* EMAIL */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Email</label>
+            <label className="mb-2 block text-sm font-medium">
+              Email
+            </label>
 
             <input
               type="email"
@@ -140,14 +146,18 @@ const Login = () => {
 
           {/* PASSWORD */}
           <div>
-            <label className="mb-2 block text-sm font-medium">Password</label>
+            <label className="mb-2 block text-sm font-medium">
+              Password
+            </label>
 
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={
-                mode === "login" ? "Enter your password" : "Create a password"
+                mode === "login"
+                  ? "Enter your password"
+                  : "Create a password"
               }
               required
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black"

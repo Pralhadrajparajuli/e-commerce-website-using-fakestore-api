@@ -1,28 +1,74 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import useCartStore from "./store/cartStore";
-import { useWishlist } from "./WishlistContext";
-import { useToast } from "./ToastContext";
+import useCartStore from "../store/cartStore";
+import useWishlistStore from "../store/wishlistStore";
+import useToastStore from "../store/toastStore";
+import useAuthStore from "../store/authStore";
 
 const TrendingNow = ({ products }) => {
+  const navigate = useNavigate();
+
+  // Cart Zustand store
   const addToCart = useCartStore(
     (state) => state.addToCart
   );
 
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  // Wishlist Zustand store
+  const toggleWishlist = useWishlistStore(
+    (state) => state.toggleWishlist
+  );
 
-  const { showToast } = useToast();
+  const isInWishlist = useWishlistStore(
+    (state) => state.isInWishlist
+  );
+
+  // Toast Zustand store
+  const showToast = useToastStore(
+    (state) => state.showToast
+  );
+
+  // Authentication Zustand store
+  const user = useAuthStore((state) => state.user);
 
   // Show only first 8 products
   const trendingProducts = products.slice(0, 8);
 
+  // Add product to cart
+  const handleAddToCart = (product) => {
+    if (!user) {
+      showToast(
+        "Please login to add products to cart",
+        "error"
+      );
+
+      navigate("/login");
+      return;
+    }
+
+    addToCart(product);
+    showToast("Added to cart");
+  };
+
+  // Add or remove product from wishlist
+  const handleWishlist = (product) => {
+    if (!user) {
+      showToast(
+        "Please login to add products to wishlist",
+        "error"
+      );
+
+      navigate("/login");
+      return;
+    }
+
+    toggleWishlist(product);
+  };
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
-
       {/* Heading */}
       <div className="mb-10 flex items-center justify-between">
-
         <div>
           <h2 className="text-3xl font-bold text-gray-900">
             Trending Now
@@ -40,37 +86,37 @@ const TrendingNow = ({ products }) => {
         >
           Explore All →
         </Link>
-
       </div>
 
       {/* Products */}
       <div className="grid grid-cols-4 gap-x-6 gap-y-10">
-
         {trendingProducts.map((product) => (
-          <div
-            key={product.id}
-            className="group"
-          >
-
+          <div key={product.id} className="group">
             {/* Image + Buttons */}
             <div className="relative">
-
               {/* Product Image */}
               <Link to={`/product/${product.id}`}>
                 <div className="h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
-
                   <img
-                    src={product.thumbnail}
+                    src={
+                      product.image ||
+                      product.thumbnail ||
+                      product.images?.[0]
+                    }
                     alt={product.title}
                     className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                   />
-
                 </div>
               </Link>
 
               {/* Heart */}
               <button
-                onClick={() => toggleWishlist(product)}
+                onClick={() => handleWishlist(product)}
+                aria-label={
+                  isInWishlist(product.id)
+                    ? "Remove from wishlist"
+                    : "Add to wishlist"
+                }
                 className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-gray-100"
               >
                 <Heart
@@ -85,21 +131,16 @@ const TrendingNow = ({ products }) => {
 
               {/* Add to Cart */}
               <button
-                onClick={() => {
-                  addToCart(product);
-                  showToast("Added to cart");
-                }}
+                onClick={() => handleAddToCart(product)}
                 className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-3 items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-gray-800"
               >
                 <ShoppingCart size={17} />
                 Add to Cart
               </button>
-
             </div>
 
             {/* Product Title */}
             <Link to={`/product/${product.id}`}>
-
               <h3 className="mt-4 line-clamp-2 text-base font-semibold text-gray-900 transition group-hover:text-blue-600">
                 {product.title}
               </h3>
@@ -108,14 +149,10 @@ const TrendingNow = ({ products }) => {
               <p className="mt-2 text-lg font-bold text-gray-900">
                 ${product.price}
               </p>
-
             </Link>
-
           </div>
         ))}
-
       </div>
-
     </section>
   );
 };

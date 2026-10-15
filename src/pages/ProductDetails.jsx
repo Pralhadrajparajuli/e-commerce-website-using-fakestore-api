@@ -1,33 +1,53 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import useCartStore from "./store/cartStore";
-import { useWishlist } from "./WishlistContext";
-import { useToast } from "./ToastContext";
+import useCartStore from "../store/cartStore";
+import useWishlistStore from "../store/wishlistStore";
+import useToastStore from "../store/toastStore";
+import useAuthStore from "../store/authStore";
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
 
+  // Zustand: Cart
   const addToCart = useCartStore(
     (state) => state.addToCart
   );
 
-  const {
-    toggleWishlist,
-    isInWishlist,
-  } = useWishlist();
+  // Zustand: Wishlist
+  const toggleWishlist = useWishlistStore(
+    (state) => state.toggleWishlist
+  );
 
-  const { showToast } = useToast();
+  const isInWishlist = useWishlistStore(
+    (state) => state.isInWishlist
+  );
+
+  // Zustand: Toast
+  const showToast = useToastStore(
+    (state) => state.showToast
+  );
+
+  // Zustand: Authentication
+  const user = useAuthStore(
+    (state) => state.user
+  );
 
   const saleProductIds = [1, 3, 5, 7, 9];
 
+  // Fetch product
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProduct = async () => {
+      setProduct(null);
+
       try {
         const savedProducts =
           localStorage.getItem("products");
@@ -40,7 +60,10 @@ const ProductDetails = () => {
           );
 
           if (foundProduct) {
-            setProduct(foundProduct);
+            if (!cancelled) {
+              setProduct(foundProduct);
+            }
+
             return;
           }
         }
@@ -55,13 +78,23 @@ const ProductDetails = () => {
 
         const data = await response.json();
 
-        setProduct(data);
+        if (!cancelled) {
+          setProduct(data);
+        }
       } catch (error) {
         console.error(error);
+
+        if (!cancelled) {
+          setProduct(null);
+        }
       }
     };
 
     fetchProduct();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (!product) {
@@ -78,21 +111,38 @@ const ProductDetails = () => {
     ? product.price * 0.8
     : product.price;
 
+  // Add to cart
   const handleAddToCart = () => {
+    if (!user) {
+      showToast(
+        "Please login to add products to cart",
+        "error"
+      );
+
+      navigate("/login");
+      return;
+    }
+
     addToCart(product, quantity);
-    showToast("Added to cart");
+
+    showToast("Added to cart", "success");
   };
 
+  // Add or remove wishlist item
   const handleWishlist = () => {
-    const alreadyInWishlist = isInWishlist(product.id);
+    if (!user) {
+      showToast(
+        "Please login to add products to wishlist",
+        "error"
+      );
 
-    toggleWishlist(product);
-
-    if (alreadyInWishlist) {
-      showToast("Removed from wishlist", "error");
-    } else {
-      showToast("Added to wishlist");
+      navigate("/login");
+      return;
     }
+
+    // The wishlist store handles both the update
+    // and the corresponding toast notification.
+    toggleWishlist(product);
   };
 
   return (
@@ -102,6 +152,7 @@ const ProductDetails = () => {
         <div className="relative flex min-h-[500px] items-center justify-center rounded-2xl bg-gray-100 p-10">
           <img
             src={
+              product.image ||
               product.thumbnail ||
               product.images?.[0]
             }
@@ -112,6 +163,11 @@ const ProductDetails = () => {
           {/* Wishlist */}
           <button
             onClick={handleWishlist}
+            aria-label={
+              isInWishlist(product.id)
+                ? "Remove from wishlist"
+                : "Add to wishlist"
+            }
             className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-100"
           >
             <Heart

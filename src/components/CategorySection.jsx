@@ -1,14 +1,17 @@
 import { Link } from "react-router-dom";
 
-const CategorySection = ({ products }) => {
+const CategorySection = ({ products = [] }) => {
   // Get unique categories
   const categories = [
-    ...new Set(products.map((product) => product.category)),
+    ...new Set(
+      products
+        .map((product) => product.category)
+        .filter(Boolean)
+    ),
   ];
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
-
       {/* Title */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900">
@@ -22,12 +25,16 @@ const CategorySection = ({ products }) => {
 
       {/* Categories */}
       <div className="grid grid-cols-4 gap-5">
-
         {categories.map((category) => {
-
           const product = products.find(
             (item) => item.category === category
           );
+
+          const productImage =
+            product?.image ||
+            product?.thumbnail ||
+            product?.images?.[0] ||
+            "";
 
           return (
             <Link
@@ -35,12 +42,12 @@ const CategorySection = ({ products }) => {
               to={`/category/${category}`}
               className="group"
             >
-
               {/* Image box */}
               <div className="h-64 overflow-hidden rounded-2xl bg-gray-100 p-5">
                 <img
-                  src={product?.thumbnail}
+                  src={productImage}
                   alt={category}
+                  loading="lazy"
                   className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                 />
               </div>
@@ -49,14 +56,12 @@ const CategorySection = ({ products }) => {
               <h3 className="mt-4 text-lg font-semibold capitalize text-gray-900 group-hover:text-blue-600">
                 {category}
               </h3>
-
             </Link>
           );
         })}
-
       </div>
     </section>
   );
 };
 
-export default CategorySection;  
+export default CategorySection;

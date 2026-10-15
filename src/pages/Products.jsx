@@ -1,96 +1,98 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Link,
   useParams,
   useSearchParams,
+  useNavigate,
 } from "react-router-dom";
 
+import { useQuery } from "@tanstack/react-query";
 import { Heart, ShoppingCart } from "lucide-react";
 
-import useCartStore from "./store/cartStore";
-import { useWishlist } from "./WishlistContext";
-import { useToast } from "./ToastContext";
+import useCartStore from "../store/cartStore";
+import useWishlistStore from "../store/wishlistStore";
+import useToastStore from "../store/toastStore";
+import useAuthStore from "../store/authStore";
+
+import { getProducts } from "../api/productApi";
 
 const Products = ({ saleOnly = false }) => {
-  const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   const { category } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const searchText = searchParams.get("search") || "";
 
+  // Zustand: Cart
   const addToCart = useCartStore(
     (state) => state.addToCart
   );
 
-  const {
-    toggleWishlist,
-    isInWishlist,
-  } = useWishlist();
+  // Zustand: Wishlist
+  const toggleWishlist = useWishlistStore(
+    (state) => state.toggleWishlist
+  );
 
-  const { showToast } = useToast();
+  const isInWishlist = useWishlistStore(
+    (state) => state.isInWishlist
+  );
+
+  // Zustand: Toast
+  const showToast = useToastStore(
+    (state) => state.showToast
+  );
+
+  // Zustand: Authentication
+  const user = useAuthStore(
+    (state) => state.user
+  );
 
   const productsPerPage = 9;
-
   const saleProductIds = [1, 3, 5, 7, 9];
 
+  // Fetch products using TanStack Query
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["products"],
+    queryFn: getProducts,
+  });
+
+  // Reset pagination when filters change
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const savedProducts = localStorage.getItem("products");
+    setCurrentPage(1);
+  }, [category, searchText, saleOnly]);
 
-        if (savedProducts) {
-          setProducts(JSON.parse(savedProducts));
-          return;
-        }
-
-        const response = await fetch(
-          "https://dummyjson.com/products?limit=0"
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
-        const data = await response.json();
-
-        setProducts(data.products);
-
-        localStorage.setItem(
-          "products",
-          JSON.stringify(data.products)
-        );
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-  // Filter products
+  // Filter products by category
   let filteredProducts = products;
 
   if (category) {
     filteredProducts = filteredProducts.filter(
       (product) =>
-        product.category.toLowerCase() ===
+        product.category?.toLowerCase() ===
         category.toLowerCase()
     );
   }
 
+  // Filter products by search
   if (searchText) {
-    filteredProducts = filteredProducts.filter((product) =>
-      product.title
-        .toLowerCase()
-        .includes(searchText.toLowerCase())
+    filteredProducts = filteredProducts.filter(
+      (product) =>
+        product.title
+          .toLowerCase()
+          .includes(searchText.toLowerCase())
     );
   }
 
+  // Filter sale products
   if (saleOnly) {
-    filteredProducts = filteredProducts.filter((product) =>
-      saleProductIds.includes(product.id)
+    filteredProducts = filteredProducts.filter(
+      (product) => saleProductIds.includes(product.id)
     );
   }
 
@@ -99,30 +101,68 @@ const Products = ({ saleOnly = false }) => {
     filteredProducts.length / productsPerPage
   );
 
-  const startIndex =
-    (currentPage - 1) * productsPerPage;
+  const startIndex = (currentPage - 1) * productsPerPage;
 
   const currentProducts = filteredProducts.slice(
     startIndex,
     startIndex + productsPerPage
   );
 
+  // Add to cart
   const handleAddToCart = (product) => {
-    addToCart(product);
-    showToast("Added to cart");
-  };
+    if (!user) {
+      showToast(
+        "Please login to add products to cart",
+        "error"
+      );
 
-  const handleWishlist = (product) => {
-    const alreadyInWishlist = isInWishlist(product.id);
-
-    toggleWishlist(product);
-
-    if (alreadyInWishlist) {
-      showToast("Removed from wishlist", "error");
-    } else {
-      showToast("Added to wishlist");
+      navigate("/login");
+      return;
     }
+
+    addToCart(product);
+
+    showToast("Added to cart", "success");
   };
+
+  // Add or remove wishlist item
+  const handleWishlist = (product) => {
+    if (!user) {
+      showToast(
+        "Please login to add products to wishlist",
+        "error"
+      );
+
+      navigate("/login");
+      return;
+    }
+
+    // Zustand wishlist store handles the update
+    // and displays the appropriate toast message.
+    toggleWishlist(product);
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <section className="mx-auto max-w-7xl px-6 py-12">
+        <p className="py-10 text-center text-gray-500">
+          Loading products...
+        </p>
+      </section>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <section className="mx-auto max-w-7xl px-6 py-12">
+        <p className="py-10 text-center text-red-500">
+          {error.message || "Failed to load products."}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12">
@@ -145,16 +185,14 @@ const Products = ({ saleOnly = false }) => {
             : product.price;
 
           return (
-            <div
-              key={product.id}
-              className="group"
-            >
+            <div key={product.id} className="group">
               {/* Image */}
               <div className="relative">
                 <Link to={`/product/${product.id}`}>
                   <div className="h-80 overflow-hidden rounded-2xl bg-gray-100 p-6">
                     <img
                       src={
+                        product.image ||
                         product.thumbnail ||
                         product.images?.[0]
                       }
@@ -166,8 +204,11 @@ const Products = ({ saleOnly = false }) => {
 
                 {/* Wishlist */}
                 <button
-                  onClick={() =>
-                    handleWishlist(product)
+                  onClick={() => handleWishlist(product)}
+                  aria-label={
+                    isInWishlist(product.id)
+                      ? "Remove from wishlist"
+                      : "Add to wishlist"
                   }
                   className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-gray-100"
                 >
@@ -183,9 +224,7 @@ const Products = ({ saleOnly = false }) => {
 
                 {/* Add to Cart */}
                 <button
-                  onClick={() =>
-                    handleAddToCart(product)
-                  }
+                  onClick={() => handleAddToCart(product)}
                   className="absolute bottom-4 left-1/2 flex -translate-x-1/2 translate-y-3 items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-gray-800"
                 >
                   <ShoppingCart size={17} />
@@ -221,6 +260,13 @@ const Products = ({ saleOnly = false }) => {
           );
         })}
       </div>
+
+      {/* No Products */}
+      {currentProducts.length === 0 && (
+        <p className="py-10 text-center text-gray-500">
+          No products found.
+        </p>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

@@ -1,10 +1,8 @@
 import { create } from "zustand";
 
 const useCartStore = create((set) => ({
-  // Cart data
   cart: [],
 
-  // Add product
   addToCart: (product, quantity = 1) => {
     set((state) => {
       const existingProduct = state.cart.find(
@@ -30,13 +28,13 @@ const useCartStore = create((set) => ({
           {
             ...product,
             quantity,
+            selected: false,
           },
         ],
       };
     });
   },
 
-  // Increase quantity
   increaseQuantity: (id) => {
     set((state) => ({
       cart: state.cart.map((item) =>
@@ -50,7 +48,6 @@ const useCartStore = create((set) => ({
     }));
   },
 
-  // Decrease quantity
   decreaseQuantity: (id) => {
     set((state) => ({
       cart: state.cart
@@ -66,14 +63,53 @@ const useCartStore = create((set) => ({
     }));
   },
 
-  // Remove product
   removeFromCart: (id) => {
     set((state) => ({
-      cart: state.cart.filter((item) => item.id !== id),
+      cart: state.cart.filter(
+        (item) => item.id !== id
+      ),
     }));
   },
 
-  // Clear cart after successful payment
+  toggleSelection: (id) => {
+    set((state) => ({
+      cart: state.cart.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              selected: !item.selected,
+            }
+          : item
+      ),
+    }));
+  },
+
+  selectAll: () => {
+    set((state) => ({
+      cart: state.cart.map((item) => ({
+        ...item,
+        selected: true,
+      })),
+    }));
+  },
+
+  deselectAll: () => {
+    set((state) => ({
+      cart: state.cart.map((item) => ({
+        ...item,
+        selected: false,
+      })),
+    }));
+  },
+
+  removeSelectedItems: () => {
+    set((state) => ({
+      cart: state.cart.filter(
+        (item) => !item.selected
+      ),
+    }));
+  },
+
   clearCart: () => {
     set({ cart: [] });
   },

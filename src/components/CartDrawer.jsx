@@ -1,43 +1,56 @@
 import { X, Plus, Minus, Trash2 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
-import useCartStore from "./store/cartStore";
-import { useToast } from "./ToastContext";
+import useCartStore from "../store/cartStore";
+import useToastStore from "../store/toastStore";
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
-  // Get cart from Zustand
   const cart = useCartStore((state) => state.cart);
 
-  // Get cart functions from Zustand
   const increaseQuantity = useCartStore((state) => state.increaseQuantity);
 
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
 
   const removeFromCart = useCartStore((state) => state.removeFromCart);
 
-  // Get toast function
-  const { showToast } = useToast();
+  const toggleSelection = useCartStore((state) => state.toggleSelection);
 
-  // Calculate total price
-  const cartTotal = cart.reduce(
+  const selectAll = useCartStore((state) => state.selectAll);
+
+  const deselectAll = useCartStore((state) => state.deselectAll);
+
+ const showToast = useToastStore((state) => state.showToast);
+
+  // Only selected products
+  const selectedItems = cart.filter((item) => item.selected);
+
+  // Total of selected products
+  const selectedTotal = selectedItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
   );
+
+  const allSelected = cart.length > 0 && cart.every((item) => item.selected);
 
   if (!isOpen) {
     return null;
   }
 
-  // Remove product from cart
   const handleRemove = (id) => {
     removeFromCart(id);
+
     showToast("Product removed from cart", "error");
   };
 
-  // Go to checkout
   const handleCheckout = () => {
+    if (selectedItems.length === 0) {
+      showToast("Please select at least one product", "error");
+
+      return;
+    }
+
     onClose();
     navigate("/checkout");
   };
@@ -58,6 +71,31 @@ const CartDrawer = ({ isOpen, onClose }) => {
           </button>
         </div>
 
+        {/* Select All */}
+        {cart.length > 0 && (
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={() => {
+                  if (allSelected) {
+                    deselectAll();
+                  } else {
+                    selectAll();
+                  }
+                }}
+                className="h-4 w-4"
+              />
+              Select All
+            </label>
+
+            <span className="text-sm text-gray-500">
+              {selectedItems.length} selected
+            </span>
+          </div>
+        )}
+
         {/* Cart items */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {cart.length === 0 ? (
@@ -67,7 +105,17 @@ const CartDrawer = ({ isOpen, onClose }) => {
           ) : (
             <div className="space-y-6">
               {cart.map((item) => (
-                <div key={item.id} className="flex gap-4 border-b pb-5">
+                <div key={item.id} className="flex gap-3 border-b pb-5">
+                  {/* Checkbox */}
+                  <div className="pt-2">
+                    <input
+                      type="checkbox"
+                      checked={item.selected || false}
+                      onChange={() => toggleSelection(item.id)}
+                      className="h-4 w-4"
+                    />
+                  </div>
+
                   {/* Product image */}
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
@@ -88,7 +136,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
                     {/* Quantity */}
                     <div className="mt-3 flex items-center justify-between">
                       <div className="flex items-center rounded-lg border">
-                        {/* Decrease */}
                         <button
                           onClick={() => decreaseQuantity(item.id)}
                           className="p-2 hover:bg-gray-100"
@@ -98,7 +145,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
                         <span className="px-3 text-sm">{item.quantity}</span>
 
-                        {/* Increase */}
                         <button
                           onClick={() => increaseQuantity(item.id)}
                           className="p-2 hover:bg-gray-100"
@@ -125,14 +171,20 @@ const CartDrawer = ({ isOpen, onClose }) => {
         {/* Bottom section */}
         {cart.length > 0 && (
           <div className="border-t bg-white px-6 py-5">
-            {/* Subtotal */}
-            <div className="mb-5 flex justify-between text-lg font-bold">
-              <span>Subtotal</span>
+            {/* Selected total */}
+            <div className="mb-2 flex justify-between text-lg font-bold">
+              <span>Selected Total</span>
 
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>${selectedTotal.toFixed(2)}</span>
             </div>
 
-            {/* Continue Shopping */}
+            <p className="mb-5 text-sm text-gray-500">
+              {selectedItems.length === 0
+                ? "Select products to checkout"
+                : `${selectedItems.length} product(s) selected`}
+            </p>
+
+            {/* Continue shopping */}
             <button
               onClick={onClose}
               className="mb-3 w-full rounded-xl border border-gray-300 py-3 font-semibold hover:bg-gray-100"
@@ -143,7 +195,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
             {/* Checkout */}
             <button
               onClick={handleCheckout}
-              className="w-full rounded-xl bg-black py-3 font-semibold text-white hover:bg-gray-800"
+              disabled={selectedItems.length === 0}
+              className="w-full rounded-xl bg-black py-3 font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               Checkout
             </button>

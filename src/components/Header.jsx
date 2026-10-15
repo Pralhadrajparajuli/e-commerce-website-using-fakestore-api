@@ -8,9 +8,9 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-import useCartStore from "./store/cartStore";
-import { useWishlist } from "./WishlistContext";
-import { useAuth } from "./AuthContext";
+import useCartStore from "../store/cartStore";
+import useWishlistStore from "../store/wishlistStore";
+import useAuthStore from "../store/authStore";
 
 import CartDrawer from "./CartDrawer";
 import WishlistDrawer from "./WishlistDrawer";
@@ -25,11 +25,13 @@ const Header = () => {
     0
   );
 
-  // Wishlist data
-  const { wishlistCount } = useWishlist();
+  // Wishlist data from Zustand
+  const wishlist = useWishlistStore((state) => state.wishlist);
+  const wishlistCount = wishlist.length;
 
-  // Authentication data
-  const { user, logout } = useAuth();
+  // Authentication data from Zustand
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   // Drawer states
   const [cartOpen, setCartOpen] = useState(false);
@@ -68,7 +70,6 @@ const Header = () => {
     <>
       <header className="bg-white shadow-sm">
         <div className="mx-auto flex max-w-7xl items-center gap-8 px-6 py-4">
-
           {/* Logo */}
           <Link
             to="/"
@@ -83,7 +84,6 @@ const Header = () => {
 
           {/* Navbar */}
           <nav className="flex items-center gap-7 text-base font-semibold">
-
             {/* Home */}
             <Link
               to="/"
@@ -95,6 +95,7 @@ const Header = () => {
             {/* Products Dropdown */}
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setProductsOpen(!productsOpen)}
                 className="flex items-center gap-1 whitespace-nowrap hover:text-blue-600"
               >
@@ -110,7 +111,6 @@ const Header = () => {
 
               {productsOpen && (
                 <div className="absolute left-0 top-full z-50 mt-3 w-56 rounded-lg border bg-white py-2 shadow-lg">
-
                   <Link
                     to="/products/smartphones"
                     onClick={() => setProductsOpen(false)}
@@ -174,7 +174,6 @@ const Header = () => {
                   >
                     Beauty
                   </Link>
-
                 </div>
               )}
             </div>
@@ -194,7 +193,6 @@ const Header = () => {
             >
               Sale
             </Link>
-
           </nav>
 
           {/* Search */}
@@ -215,10 +213,11 @@ const Header = () => {
 
           {/* Icons */}
           <div className="flex shrink-0 items-center gap-3">
-
             {/* Wishlist */}
             <button
+              type="button"
               onClick={() => setWishlistOpen(true)}
+              aria-label="Open wishlist"
               className="relative rounded-lg border p-2.5 transition hover:bg-gray-100 hover:text-blue-600"
             >
               <Heart size={22} />
@@ -232,7 +231,9 @@ const Header = () => {
 
             {/* Cart */}
             <button
+              type="button"
               onClick={() => setCartOpen(true)}
+              aria-label="Open cart"
               className="relative rounded-lg border p-2.5 transition hover:bg-gray-100 hover:text-blue-600"
             >
               <ShoppingCart size={22} />
@@ -247,7 +248,9 @@ const Header = () => {
             {/* User */}
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setUserOpen(!userOpen)}
+                aria-label="Open user menu"
                 className="rounded-lg border p-2.5 transition hover:bg-gray-100 hover:text-blue-600"
               >
                 <User size={22} />
@@ -255,7 +258,6 @@ const Header = () => {
 
               {userOpen && (
                 <div className="absolute right-0 top-full z-50 mt-3 w-52 rounded-lg border bg-white py-2 shadow-lg">
-
                   {user ? (
                     <>
                       <div className="border-b px-4 py-3">
@@ -277,6 +279,7 @@ const Header = () => {
                       </Link>
 
                       <button
+                        type="button"
                         onClick={handleLogout}
                         className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-100"
                       >
@@ -302,13 +305,10 @@ const Header = () => {
                       </Link>
                     </>
                   )}
-
                 </div>
               )}
             </div>
-
           </div>
-
         </div>
       </header>
 

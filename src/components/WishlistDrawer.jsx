@@ -1,8 +1,11 @@
 import { X, Trash2 } from "lucide-react";
-import { useWishlist } from "./WishlistContext";
+import useWishlistStore from "../store/wishlistStore";
 
 const WishlistDrawer = ({ isOpen, onClose }) => {
-  const { wishlist, toggleWishlist } = useWishlist();
+  const wishlist = useWishlistStore((state) => state.wishlist);
+  const toggleWishlist = useWishlistStore(
+    (state) => state.toggleWishlist
+  );
 
   if (!isOpen) return null;
 
@@ -16,7 +19,6 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
 
       {/* Wishlist drawer */}
       <div className="fixed right-0 top-0 z-50 flex h-full w-[400px] flex-col bg-white shadow-2xl">
-
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-5">
           <h2 className="text-xl font-bold">
@@ -43,11 +45,14 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                   key={item.id}
                   className="flex gap-4 border-b pb-5"
                 >
-
                   {/* Product image */}
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
-                      src={item.thumbnail || item.images?.[0]}
+                      src={
+                        item.image ||
+                        item.thumbnail ||
+                        item.images?.[0]
+                      }
                       alt={item.title}
                       className="h-full w-full object-contain"
                     />
@@ -55,7 +60,6 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
 
                   {/* Product information */}
                   <div className="flex flex-1 justify-between">
-
                     <div>
                       <h3 className="line-clamp-2 text-sm font-semibold">
                         {item.title}
@@ -69,11 +73,11 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                     {/* Remove button */}
                     <button
                       onClick={() => toggleWishlist(item)}
+                      aria-label={`Remove ${item.title} from wishlist`}
                       className="text-gray-400 hover:text-red-500"
                     >
                       <Trash2 size={18} />
                     </button>
-
                   </div>
                 </div>
               ))}

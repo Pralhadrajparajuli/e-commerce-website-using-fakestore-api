@@ -1,16 +1,49 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "./CartContext";
+
+import useCartStore from "../store/cartStore";
+import useAuthStore from "../store/authStore";
+import useToastStore from "../store/toastStore";
 
 const Payment = () => {
   const navigate = useNavigate();
-  const { cart, cartTotal } = useCart();
+
+  // Zustand stores
+  const cart = useCartStore((state) => state.cart);
+  const cartTotal = useCartStore((state) => state.cartTotal);
+  const removeSelectedItems = useCartStore(
+    (state) => state.removeSelectedItems
+  );
+
+  const user = useAuthStore((state) => state.user);
+  const showToast = useToastStore((state) => state.showToast);
 
   const [paymentMethod, setPaymentMethod] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Only process selected cart items when the store supports selection.
+  const selectedItems = cart.filter((item) => item.selected);
+
+  const itemsToPay = selectedItems.length > 0 ? selectedItems : cart;
+
+  const subtotal = itemsToPay.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+
   const handlePayment = () => {
+    if (!user) {
+      showToast("Please log in before making a payment.", "error");
+      navigate("/login");
+      return;
+    }
+
+    if (itemsToPay.length === 0) {
+      setMessage("Your cart is empty.");
+      return;
+    }
+
     if (!paymentMethod) {
       setMessage("Please select a payment method.");
       return;
@@ -19,10 +52,49 @@ const Payment = () => {
     setLoading(true);
     setMessage("");
 
-    // Fake payment processing
+    // Simulate payment processing
     setTimeout(() => {
+      const newOrder = {
+        id: Date.now(),
+        userName: user.name,
+        userEmail: user.email,
+        items: itemsToPay.map((item) => ({
+          ...item,
+        })),
+        subtotal,
+        deliveryCharge: subtotal >= 100 ? 0 : 10,
+        total: subtotal + (subtotal >= 100 ? 0 : 10),
+        paymentMethod,
+        paymentStatus: "Paid",
+        orderStatus: "Processing",
+        address: user.address || "",
+        transactionUuid: `TXN-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Save the order
+      const existingOrders = JSON.parse(
+        localStorage.getItem("orders") || "[]"
+      );
+
+      localStorage.setItem(
+        "orders",
+        JSON.stringify([...existingOrders, newOrder])
+      );
+
+      // Remove purchased items from the cart.
+      // The cart store should remove selected items when selection is used.
+      removeSelectedItems();
+
       setLoading(false);
       setMessage(`Payment successful using ${paymentMethod}!`);
+
+      showToast("Payment successful! Your order has been placed.");
+
+      // Navigate to the Account page after a short delay.
+      setTimeout(() => {
+        navigate("/account");
+      }, 1500);
     }, 1500);
   };
 
@@ -40,6 +112,7 @@ const Payment = () => {
 
             <div className="space-y-4">
               <button
+                type="button"
                 onClick={() => setPaymentMethod("eSewa")}
                 className={`w-full rounded-lg border p-4 text-left transition ${
                   paymentMethod === "eSewa"
@@ -54,6 +127,7 @@ const Payment = () => {
               </button>
 
               <button
+                type="button"
                 onClick={() => setPaymentMethod("Khalti")}
                 className={`w-full rounded-lg border p-4 text-left transition ${
                   paymentMethod === "Khalti"
@@ -81,8 +155,9 @@ const Payment = () => {
             )}
 
             <button
+              type="button"
               onClick={handlePayment}
-              disabled={loading}
+              disabled={loading || cart.length === 0}
               className="mt-6 w-full rounded-lg bg-black py-3 font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Processing Payment..." : "Pay Now"}
@@ -94,7 +169,7 @@ const Payment = () => {
             <h2 className="mb-5 text-xl font-semibold">Order Summary</h2>
 
             <div className="space-y-4">
-              {cart.map((item) => (
+              {itemsToPay.map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center justify-between border-b pb-3"
@@ -114,8 +189,20 @@ const Payment = () => {
             </div>
 
             <div className="mt-6 flex justify-between text-lg font-bold">
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+
+            <div className="mt-3 flex justify-between text-sm text-gray-600">
+              <span>Delivery</span>
+              <span>{subtotal >= 100 ? "Free" : "$10.00"}</span>
+            </div>
+
+            <div className="mt-4 flex justify-between border-t pt-4 text-lg font-bold">
               <span>Total</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>
+                ${(subtotal + (subtotal >= 100 ? 0 : 10)).toFixed(2)}
+              </span>
             </div>
           </div>
         </div>

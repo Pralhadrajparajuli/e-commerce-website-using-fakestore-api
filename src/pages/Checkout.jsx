@@ -1,13 +1,20 @@
 import { useState } from "react";
-import useCartStore from "./store/cartStore";
-import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const Checkout = () => {
-  const cart = useCartStore((state) => state.cart);
-  const clearCart = useCartStore((state) => state.clearCart);
+import useCartStore from "../store/cartStore";
+import useAuthStore from "../store/authStore";
 
-  const { user } = useAuth();
+const Checkout = () => {
+  // Zustand cart store
+  const cart = useCartStore((state) => state.cart);
+
+  const removeSelectedItems = useCartStore(
+    (state) => state.removeSelectedItems
+  );
+
+  // Zustand authentication store
+  const user = useAuthStore((state) => state.user);
+
   const navigate = useNavigate();
 
   const [showPayment, setShowPayment] = useState(false);
@@ -15,24 +22,33 @@ const Checkout = () => {
   const [processing, setProcessing] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState("");
 
-  const cartTotal = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
+  // Only selected cart items
+  const selectedItems = cart.filter(
+    (item) => item.selected
+  );
+
+  // Total of selected items
+  const cartTotal = selectedItems.reduce(
+    (total, item) =>
+      total + item.price * item.quantity,
     0
   );
 
   const deliveryCharge = cartTotal >= 100 ? 0 : 10;
+
   const total = cartTotal + deliveryCharge;
 
-  // Empty cart
-  if (cart.length === 0) {
+  // No selected items
+  if (selectedItems.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-20 text-center">
         <h1 className="mb-4 text-3xl font-bold">
-          Your cart is empty
+          No Products Selected
         </h1>
 
         <p className="mb-6 text-gray-500">
-          Add some products before going to checkout.
+          Please select at least one product from
+          your cart before going to checkout.
         </p>
 
         <button
@@ -46,24 +62,86 @@ const Checkout = () => {
   }
 
   const handlePayment = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (!user.address) {
+      setPaymentMessage(
+        "Please add a shipping address before payment."
+      );
+      return;
+    }
+
     if (!paymentMethod) {
-      setPaymentMessage("Please select a payment method.");
+      setPaymentMessage(
+        "Please select a payment method."
+      );
       return;
     }
 
     setProcessing(true);
     setPaymentMessage("");
 
-    // Frontend-only fake payment
+    // Frontend-only simulated payment
     setTimeout(() => {
-      setProcessing(false);
+      try {
+        const transactionId = Date.now();
 
-      // Clear cart after successful payment
-      clearCart();
+        // Create order after simulated successful payment
+        const newOrder = {
+          id: transactionId,
 
-      setPaymentMessage(
-        `Payment successful using ${paymentMethod}!`
-      );
+          userName: user.name || "Guest User",
+          userEmail: user.email || "No email",
+
+          // Save only the selected products
+          items: selectedItems.map((item) => ({
+            ...item,
+          })),
+
+          subtotal: cartTotal,
+          deliveryCharge,
+          total,
+
+          paymentMethod,
+          paymentStatus: "Paid",
+          orderStatus: "Processing",
+
+          address: user.address,
+
+          transactionUuid: `TXN-${transactionId}`,
+
+          createdAt: new Date().toISOString(),
+        };
+
+        // Get existing orders safely
+        const existingOrders = JSON.parse(
+          localStorage.getItem("orders") || "[]"
+        );
+
+        // Save the new order
+        localStorage.setItem(
+          "orders",
+          JSON.stringify([newOrder, ...existingOrders])
+        );
+
+        // Remove only the selected items from Zustand cart
+        removeSelectedItems();
+
+        setPaymentMessage(
+          `Payment successful using ${paymentMethod}!`
+        );
+      } catch (error) {
+        console.error("Error saving order:", error);
+
+        setPaymentMessage(
+          "Payment could not be completed. Please try again."
+        );
+      } finally {
+        setProcessing(false);
+      }
     }, 1500);
   };
 
@@ -74,10 +152,8 @@ const Checkout = () => {
       </h1>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-
         {/* LEFT SIDE */}
         <div className="space-y-6 lg:col-span-2">
-
           {/* User Details */}
           <div className="rounded-2xl border bg-white p-6 shadow-sm">
             <h2 className="mb-5 text-xl font-bold">
@@ -85,7 +161,6 @@ const Checkout = () => {
             </h2>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
               <div>
                 <p className="text-sm text-gray-500">
                   Name
@@ -105,7 +180,6 @@ const Checkout = () => {
                   {user?.email || "Not available"}
                 </p>
               </div>
-
             </div>
           </div>
 
@@ -144,16 +218,16 @@ const Checkout = () => {
             </h2>
 
             <div className="space-y-5">
-
-              {cart.map((item) => (
+              {selectedItems.map((item) => (
                 <div
                   key={item.id}
                   className="flex gap-4 border-b pb-5 last:border-b-0 last:pb-0"
                 >
-
+                  {/* Product Image */}
                   <div className="h-24 w-24 flex-shrink-0 rounded-xl bg-gray-100 p-3">
                     <img
                       src={
+                        item.image ||
                         item.thumbnail ||
                         item.images?.[0]
                       }
@@ -162,8 +236,8 @@ const Checkout = () => {
                     />
                   </div>
 
+                  {/* Product Details */}
                   <div className="flex flex-1 justify-between">
-
                     <div>
                       <h3 className="font-semibold">
                         {item.title}
@@ -182,26 +256,20 @@ const Checkout = () => {
                       <p className="font-bold">
                         $
                         {(
-                          item.price *
-                          item.quantity
+                          item.price * item.quantity
                         ).toFixed(2)}
                       </p>
                     </div>
-
                   </div>
                 </div>
               ))}
-
             </div>
           </div>
-
         </div>
 
         {/* RIGHT SIDE */}
         <div className="lg:col-span-1">
-
           <div className="sticky top-6 rounded-2xl border bg-white p-6 shadow-sm">
-
             <h2 className="mb-6 text-xl font-bold">
               Order Summary
             </h2>
@@ -241,12 +309,26 @@ const Checkout = () => {
               </span>
             </div>
 
-            {/* Payment button */}
+            {/* Proceed to Payment */}
             {!showPayment && (
               <>
                 <button
-                  onClick={() => setShowPayment(true)}
-                  disabled={!user?.address}
+                  onClick={() => {
+                    if (!user) {
+                      navigate("/login");
+                      return;
+                    }
+
+                    if (!user.address) {
+                      setPaymentMessage(
+                        "Please add a shipping address first."
+                      );
+                      return;
+                    }
+
+                    setPaymentMessage("");
+                    setShowPayment(true);
+                  }}
                   className={`w-full rounded-xl py-3 font-semibold text-white ${
                     user?.address
                       ? "bg-black hover:bg-gray-800"
@@ -261,20 +343,28 @@ const Checkout = () => {
                     Please add a shipping address first.
                   </p>
                 )}
+
+                {paymentMessage && (
+                  <p className="mt-3 text-center text-sm text-red-500">
+                    {paymentMessage}
+                  </p>
+                )}
               </>
             )}
 
-            {/* Payment options */}
+            {/* Payment Options */}
             {showPayment && (
               <div className="mt-4">
-
                 <h3 className="mb-4 font-bold">
                   Select Payment Method
                 </h3>
 
                 {/* eSewa */}
                 <button
-                  onClick={() => setPaymentMethod("eSewa")}
+                  onClick={() => {
+                    setPaymentMethod("eSewa");
+                    setPaymentMessage("");
+                  }}
                   className={`mb-3 w-full rounded-xl border p-4 text-left ${
                     paymentMethod === "eSewa"
                       ? "border-green-500 bg-green-50"
@@ -292,7 +382,10 @@ const Checkout = () => {
 
                 {/* Khalti */}
                 <button
-                  onClick={() => setPaymentMethod("Khalti")}
+                  onClick={() => {
+                    setPaymentMethod("Khalti");
+                    setPaymentMessage("");
+                  }}
                   className={`mb-4 w-full rounded-xl border p-4 text-left ${
                     paymentMethod === "Khalti"
                       ? "border-purple-500 bg-purple-50"
@@ -308,7 +401,7 @@ const Checkout = () => {
                   </p>
                 </button>
 
-                {/* Payment message */}
+                {/* Payment Message */}
                 {paymentMessage && (
                   <div
                     className={`mb-4 rounded-lg p-3 text-center text-sm ${
@@ -321,7 +414,7 @@ const Checkout = () => {
                   </div>
                 )}
 
-                {/* Pay button */}
+                {/* Pay Button */}
                 <button
                   onClick={handlePayment}
                   disabled={processing}
@@ -332,24 +425,22 @@ const Checkout = () => {
                     : `Pay $${total.toFixed(2)}`}
                 </button>
 
-                {/* Back button */}
+                {/* Back Button */}
                 <button
                   onClick={() => {
                     setShowPayment(false);
                     setPaymentMethod("");
                     setPaymentMessage("");
                   }}
-                  className="mt-3 w-full rounded-xl border border-gray-300 py-3 font-semibold hover:bg-gray-100"
+                  disabled={processing}
+                  className="mt-3 w-full rounded-xl border border-gray-300 py-3 font-semibold hover:bg-gray-100 disabled:opacity-50"
                 >
                   Back
                 </button>
-
               </div>
             )}
-
           </div>
         </div>
-
       </div>
     </div>
   );
